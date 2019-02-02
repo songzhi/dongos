@@ -2,21 +2,22 @@
 #![cfg_attr(not(test), no_main)]
 #![cfg_attr(test, allow(unused_imports))]
 
-use dongos::println;
+use dongos::{exit_qemu, serial_println};
 use core::panic::PanicInfo;
 
 #[cfg(not(test))]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    println!("Hello World{}", "!");
-
-    loop {}
+    panic!();
 }
 
-/// This function is called on panic.
 #[cfg(not(test))]
 #[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-    println!("{}", info);
+fn panic(_info: &PanicInfo) -> ! {
+    serial_println!("ok");
+
+    unsafe {
+        exit_qemu();
+    }
     loop {}
 }
