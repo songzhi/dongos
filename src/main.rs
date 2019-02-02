@@ -9,6 +9,7 @@ use core::panic::PanicInfo;
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     use dongos::interrupts::PICS;
+    use x86_64::structures::paging::PageTable;
 
     println!("Hello World{}", "!");
 
@@ -16,6 +17,12 @@ pub extern "C" fn _start() -> ! {
     dongos::interrupts::init_idt();
     unsafe { PICS.lock().initialize() };
     x86_64::instructions::interrupts::enable();
+
+    let level_4_table_ptr = 0xffff_ffff_ffff_f000 as *const PageTable;
+    let level_4_table = unsafe { &*level_4_table_ptr };
+    for i in 0..10 {
+        println!("Entry {}: {:?}", i, level_4_table[i]);
+    }
 
     println!("It did not crash!");
     dongos::hlt_loop();
