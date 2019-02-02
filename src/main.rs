@@ -9,10 +9,16 @@ use core::panic::PanicInfo;
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     println!("Hello World{}", "!");
+    dongos::gdt::init();
     dongos::interrupts::init_idt();
 
-    // invoke a breakpoint exception
-    x86_64::instructions::int3();
+    fn stack_overflow() {
+        stack_overflow(); // for each recursion, the return address is pushed
+    }
+
+    // trigger a stack overflow
+    stack_overflow();
+
     println!("It did not crash!");
     loop {}
 }
