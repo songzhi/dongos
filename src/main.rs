@@ -8,19 +8,17 @@ use core::panic::PanicInfo;
 #[cfg(not(test))]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+    use dongos::interrupts::PICS;
+
     println!("Hello World{}", "!");
+
     dongos::gdt::init();
     dongos::interrupts::init_idt();
-
-    fn stack_overflow() {
-        stack_overflow(); // for each recursion, the return address is pushed
-    }
-
-    // trigger a stack overflow
-    stack_overflow();
+    unsafe { PICS.lock().initialize() };
+    x86_64::instructions::interrupts::enable();
 
     println!("It did not crash!");
-    loop {}
+    dongos::hlt_loop();
 }
 
 /// This function is called on panic.
@@ -28,5 +26,5 @@ pub extern "C" fn _start() -> ! {
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
-    loop {}
+    dongos::hlt_loop();
 }
