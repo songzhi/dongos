@@ -1,26 +1,34 @@
-#![cfg_attr(not(test), no_std)]
+#![no_std]
 #![cfg_attr(not(test), no_main)]
-#![cfg_attr(test, allow(unused_imports))]
+#![cfg_attr(test, allow(dead_code, unused_macros, unused_imports))]
 
-use dongos::println;
+use dongos::{exit_qemu, serial_println};
 use core::panic::PanicInfo;
 
 #[cfg(not(test))]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    println!("Hello World{}", "!");
     dongos::interrupts::init_idt();
 
-    // invoke a breakpoint exception
     x86_64::instructions::int3();
-    println!("It did not crash!");
+
+    serial_println!("ok");
+
+    unsafe {
+        exit_qemu();
+    }
     loop {}
 }
 
-/// This function is called on panic.
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    println!("{}", info);
+    serial_println!("failed");
+
+    serial_println!("{}", info);
+
+    unsafe {
+        exit_qemu();
+    }
     loop {}
 }
