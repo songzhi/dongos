@@ -1,5 +1,6 @@
 use x86_64::instructions::port::Port;
 use crate::time;
+use crate::syscall::data::RtcDateTime;
 
 pub fn init() {
     let mut rtc = Rtc::new();
@@ -39,6 +40,45 @@ impl Rtc {
 
     /// Get time
     pub fn time(&mut self) -> u64 {
+        let RtcDateTime {
+            second,
+            minute,
+            hour, day, month, year, century
+        } = self.date_time();
+
+        // Unix time from clock
+        let mut secs: u64 = (year as u64 - 1970) * 31_536_000;
+
+        let mut leap_days = (year as u64 - 1972) / 4 + 1;
+        if year % 4 == 0 && month <= 2 {
+            leap_days -= 1;
+        }
+        secs += leap_days * 86_400;
+
+        match month {
+            2 => secs += 2_678_400,
+            3 => secs += 5_097_600,
+            4 => secs += 7_776_000,
+            5 => secs += 10_368_000,
+            6 => secs += 13_046_400,
+            7 => secs += 15_638_400,
+            8 => secs += 18_316_800,
+            9 => secs += 20_995_200,
+            10 => secs += 23_587_200,
+            11 => secs += 26_265_600,
+            12 => secs += 28_857_600,
+            _ => (),
+        }
+
+        secs += (day as u64 - 1) * 86_400;
+        secs += hour as u64 * 3600;
+        secs += minute as u64 * 60;
+        secs += second as u64;
+
+        secs
+    }
+
+    pub fn date_time(&mut self) -> RtcDateTime {
         let mut second;
         let mut minute;
         let mut hour;
@@ -92,35 +132,14 @@ impl Rtc {
 
         year += century * 100;
 
-        // Unix time from clock
-        let mut secs: u64 = (year as u64 - 1970) * 31_536_000;
-
-        let mut leap_days = (year as u64 - 1972) / 4 + 1;
-        if year % 4 == 0 && month <= 2 {
-            leap_days -= 1;
+        RtcDateTime {
+            second,
+            minute,
+            hour,
+            day,
+            month,
+            year,
+            century,
         }
-        secs += leap_days * 86_400;
-
-        match month {
-            2 => secs += 2_678_400,
-            3 => secs += 5_097_600,
-            4 => secs += 7_776_000,
-            5 => secs += 10_368_000,
-            6 => secs += 13_046_400,
-            7 => secs += 15_638_400,
-            8 => secs += 18_316_800,
-            9 => secs += 20_995_200,
-            10 => secs += 23_587_200,
-            11 => secs += 26_265_600,
-            12 => secs += 28_857_600,
-            _ => (),
-        }
-
-        secs += (day as u64 - 1) * 86_400;
-        secs += hour as u64 * 3600;
-        secs += minute as u64 * 60;
-        secs += second as u64;
-
-        secs
     }
 }

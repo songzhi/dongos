@@ -217,3 +217,15 @@ impl DerefMut for TimeSpec {
         }
     }
 }
+
+#[derive(Copy, Clone, Debug, Default)]
+#[repr(C)]
+pub struct RtcDateTime {
+    pub second: usize,
+    pub minute: usize,
+    pub hour: usize,
+    pub day: usize,
+    pub month: usize,
+    pub year: usize,
+    pub century: usize,
+}

@@ -10,7 +10,7 @@ pub mod gdt;
 pub mod memory;
 pub mod time;
 pub mod syscall;
-pub mod devices;
+pub mod device;
 
 pub unsafe fn exit_qemu() {
     use x86_64::instructions::port::Port;

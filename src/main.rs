@@ -27,22 +27,20 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     create_example_mapping(&mut recursive_page_table, &mut frame_allocator);
     unsafe { (0xdeadbeaf900 as *mut u64).write_volatile(0xf021f077f065f04e) };
 
-    unsafe { dongos::devices::init_noncore(); };
+    unsafe { dongos::device::init_noncore(); };
 
     let time = {
         use dongos::{
             syscall::{
-                time::*,
-                flag::CLOCK_REALTIME,
-                data::TimeSpec,
-            }
+                data::RtcDateTime,
+            },
+            device::rtc::Rtc
         };
 
-        let mut t = TimeSpec::default();
-        clock_gettime(CLOCK_REALTIME, &mut t).unwrap();
-        t
+        let mut t = Rtc::new();
+        t.date_time()
     };
-    println!("{:?}", time);
+    println!("{:#?}", time);
 
     println!("It did not crash!");
     dongos::hlt_loop();
