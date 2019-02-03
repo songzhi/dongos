@@ -4,12 +4,15 @@
 
 use dongos::println;
 use core::panic::PanicInfo;
+use bootloader::{bootinfo::BootInfo, entry_point};
+
+entry_point!(kernel_main);
 
 #[cfg(not(test))]
 #[no_mangle]
-pub extern "C" fn _start() -> ! {
+fn kernel_main(boot_info: &'static BootInfo) -> ! {
     use dongos::interrupts::PICS;
-    use x86_64::structures::paging::PageTable;
+    use dongos::memory::{self, create_example_mapping};
 
     println!("Hello World{}", "!");
 
@@ -18,11 +21,28 @@ pub extern "C" fn _start() -> ! {
     unsafe { PICS.lock().initialize() };
     x86_64::instructions::interrupts::enable();
 
-    let level_4_table_ptr = 0xffff_ffff_ffff_f000 as *const PageTable;
-    let level_4_table = unsafe { &*level_4_table_ptr };
-    for i in 0..10 {
-        println!("Entry {}: {:?}", i, level_4_table[i]);
-    }
+    let mut recursive_page_table = unsafe { memory::init(boot_info.p4_table_addr as usize) };
+    let mut frame_allocator = memory::init_frame_allocator(&boot_info.memory_map);
+
+    create_example_mapping(&mut recursive_page_table, &mut frame_allocator);
+    unsafe { (0xdeadbeaf900 as *mut u64).write_volatile(0xf021f077f065f04e) };
+
+    unsafe { dongos::devices::init_noncore(); };
+
+    let time = {
+        use dongos::{
+            syscall::{
+                time::*,
+                flag::CLOCK_REALTIME,
+                data::TimeSpec,
+            }
+        };
+
+        let mut t = TimeSpec::default();
+        clock_gettime(CLOCK_REALTIME, &mut t).unwrap();
+        t
+    };
+    println!("{:?}", time);
 
     println!("It did not crash!");
     dongos::hlt_loop();
