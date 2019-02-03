@@ -1,4 +1,4 @@
-use crate::syscall::io::{Io, Pio};
+use x86_64::instructions::port::Port;
 use crate::time;
 
 pub fn init() {
@@ -12,16 +12,16 @@ fn cvt_bcd(value: usize) -> usize {
 
 /// RTC
 pub struct Rtc {
-    addr: Pio<u8>,
-    data: Pio<u8>,
+    addr: Port<u8>,
+    data: Port<u8>,
 }
 
 impl Rtc {
     /// Create new empty RTC
     pub fn new() -> Self {
         Rtc {
-            addr: Pio::<u8>::new(0x70),
-            data: Pio::<u8>::new(0x71),
+            addr: Port::<u8>::new(0x70),
+            data: Port::<u8>::new(0x71),
         }
     }
 
