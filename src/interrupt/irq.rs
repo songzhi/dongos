@@ -11,7 +11,7 @@ use crate::{gdt, hlt_loop, print, println};
 use lazy_static::lazy_static;
 
 pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut ExceptionStackFrame) {
-    print!(".");
+    //print!('.');
     unsafe { PICS.lock().notify_end_of_interrupt(TIMER_INTERRUPT_ID) }
 }
 

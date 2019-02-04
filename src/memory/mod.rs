@@ -17,7 +17,6 @@ pub unsafe fn init(level_4_table_addr: usize) -> RecursivePageTable<'static> {
         let level_4_table = unsafe { &mut *level_4_table_ptr };
         RecursivePageTable::new(level_4_table).unwrap()
     }
-
     init_inner(level_4_table_addr)
 }
 
