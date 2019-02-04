@@ -11,15 +11,17 @@ entry_point!(kernel_main);
 #[cfg(not(test))]
 #[no_mangle]
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
-    use dongos::interrupts::PICS;
     use dongos::memory::{self, create_example_mapping};
 
     println!("Hello World{}", "!");
 
     dongos::gdt::init();
-    dongos::interrupts::init_idt();
-    unsafe { PICS.lock().initialize() };
+    dongos::idt::init();
     x86_64::instructions::interrupts::enable();
+    unsafe {
+        dongos::device::init();
+        dongos::device::init_noncore();
+    };
 
     let mut recursive_page_table = unsafe { memory::init(boot_info.p4_table_addr as usize) };
     let mut frame_allocator = memory::init_frame_allocator(&boot_info.memory_map);
@@ -27,14 +29,13 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     create_example_mapping(&mut recursive_page_table, &mut frame_allocator);
     unsafe { (0xdeadbeaf900 as *mut u64).write_volatile(0xf021f077f065f04e) };
 
-    unsafe { dongos::device::init_noncore(); };
 
     let time = {
         use dongos::{
             syscall::{
                 data::RtcDateTime,
             },
-            device::rtc::Rtc
+            device::rtc::Rtc,
         };
 
         let mut t = Rtc::new();

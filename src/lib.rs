@@ -5,8 +5,9 @@
 
 pub mod serial;
 pub mod vga_buffer;
-pub mod interrupts;
+pub mod interrupt;
 pub mod gdt;
+pub mod idt;
 pub mod memory;
 pub mod time;
 pub mod syscall;

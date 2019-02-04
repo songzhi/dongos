@@ -8,8 +8,11 @@ use core::panic::PanicInfo;
 #[cfg(not(test))]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    dongos::interrupts::init_idt();
-
+    dongos::idt::init();
+    unsafe {
+        dongos::device::init();
+        dongos::device::init_noncore();
+    }
     x86_64::instructions::int3();
 
     serial_println!("ok");
