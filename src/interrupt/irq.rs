@@ -4,11 +4,15 @@
 // problem we skip compilation of this module on Windows.
 #![cfg(not(windows))]
 
+use core::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 use spin;
-use x86_64::structures::idt::{ExceptionStackFrame};
+use x86_64::structures::idt::ExceptionStackFrame;
 use crate::device::pic::*;
-use crate::{print};
+use crate::print;
 use lazy_static::lazy_static;
+
+//resets to 0 in context::switch()
+pub static PIT_TICKS: AtomicUsize = ATOMIC_USIZE_INIT;
 
 pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut ExceptionStackFrame) {
     //print!('.');

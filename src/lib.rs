@@ -9,6 +9,7 @@
 extern crate alloc;
 
 pub mod serial;
+#[macro_use]
 pub mod vga_buffer;
 pub mod interrupt;
 pub mod gdt;
@@ -19,6 +20,10 @@ pub mod syscall;
 pub mod device;
 pub mod thread;
 pub mod start;
+pub mod context;
+#[macro_use]
+/// Shared data structures
+pub mod common;
 
 pub use self::start::kernel_main;
 use linked_list_allocator::LockedHeap;
