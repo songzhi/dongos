@@ -5,9 +5,9 @@
 #![cfg(not(windows))]
 
 use spin;
-use x86_64::structures::idt::{ExceptionStackFrame, InterruptDescriptorTable, PageFaultErrorCode};
+use x86_64::structures::idt::{ExceptionStackFrame};
 use crate::device::pic::*;
-use crate::{gdt, hlt_loop, print, println};
+use crate::{print};
 use lazy_static::lazy_static;
 
 pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut ExceptionStackFrame) {

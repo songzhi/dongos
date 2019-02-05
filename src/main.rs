@@ -1,37 +1,17 @@
 #![cfg_attr(not(test), no_std)]
 #![cfg_attr(not(test), no_main)]
-#![cfg_attr(test, allow(unused_imports))]
+#![cfg_attr(test, allow(dead_code, unused_macros, unused_imports))]
 
 use dongos::*;
 use core::panic::PanicInfo;
-use bootloader::{bootinfo::BootInfo, entry_point};
+use bootloader::entry_point;
 
+#[macro_use]
+extern crate dongos;
+
+use dongos::kernel_main;
 entry_point!(kernel_main);
 
-#[cfg(not(test))]
-#[no_mangle]
-fn kernel_main(boot_info: &'static BootInfo) -> ! {
-    use dongos::memory::{self, create_example_mapping};
-
-    println!("Hello World{}", "!");
-
-    dongos::gdt::init();
-    dongos::idt::init();
-    unsafe {
-        dongos::device::init();
-        dongos::device::init_noncore();
-    };
-    x86_64::instructions::interrupts::enable();
-
-    let mut recursive_page_table = unsafe { memory::init(boot_info.p4_table_addr as usize) };
-    let mut frame_allocator = memory::init_frame_allocator(&boot_info.memory_map);
-
-    create_example_mapping(&mut recursive_page_table, &mut frame_allocator);
-    unsafe { (0xdeadbeaf900 as *mut u64).write_volatile(0xf021f077f065f04e) };
-
-    println!("It did not crash!");
-    dongos::hlt_loop();
-}
 
 /// This function is called on panic.
 #[cfg(not(test))]

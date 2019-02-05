@@ -2,7 +2,7 @@ use crate::interrupt::exception::*;
 use crate::interrupt::irq::*;
 use crate::device::pic::*;
 use lazy_static::lazy_static;
-use x86_64::structures::idt::{ExceptionStackFrame, InterruptDescriptorTable, PageFaultErrorCode};
+use x86_64::structures::idt::InterruptDescriptorTable;
 use crate::gdt;
 
 lazy_static! {

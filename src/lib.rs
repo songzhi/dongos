@@ -2,6 +2,11 @@
 #![feature(abi_x86_interrupt)]
 #![feature(asm)]
 #![feature(const_fn)]
+#![feature(alloc, allocator_api, alloc_error_handler)]
+
+#[cfg(not(test))]
+#[macro_use]
+extern crate alloc;
 
 pub mod serial;
 pub mod vga_buffer;
@@ -12,6 +17,16 @@ pub mod memory;
 pub mod time;
 pub mod syscall;
 pub mod device;
+pub mod thread;
+pub mod start;
+
+pub use self::start::kernel_main;
+use linked_list_allocator::LockedHeap;
+
+// Heap allocator (disabled during testing)
+#[cfg(not(test))]
+#[cfg_attr(not(test), global_allocator)]
+pub static HEAP_ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 pub unsafe fn exit_qemu() {
     use x86_64::instructions::port::Port;

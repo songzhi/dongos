@@ -4,8 +4,8 @@
 // problem we skip compilation of this module on Windows.
 #![cfg(not(windows))]
 
-use crate::{gdt, hlt_loop, print, println};
-use x86_64::structures::idt::{ExceptionStackFrame, InterruptDescriptorTable, PageFaultErrorCode};
+use crate::{hlt_loop, println};
+use x86_64::structures::idt::{ExceptionStackFrame, PageFaultErrorCode};
 
 pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut ExceptionStackFrame) {
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);

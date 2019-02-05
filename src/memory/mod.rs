@@ -4,6 +4,14 @@ use x86_64::structures::paging::{
 };
 use x86_64::{PhysAddr, VirtAddr};
 
+#[cfg(not(test))]
+pub mod heap;
+
+#[cfg(not(test))]
+pub use self::heap::bump_allocator::BumpAllocator;
+#[cfg(not(test))]
+pub use self::heap::{HEAP_START, HEAP_END, HEAP_SIZE};
+
 /// Creates a RecursivePageTable instance from the level 4 address.
 ///
 /// This function is unsafe because it can break memory safety if an invalid
@@ -60,6 +68,14 @@ pub fn create_example_mapping(
     let flags = Flags::PRESENT | Flags::WRITABLE;
 
     let map_to_result = unsafe { recursive_page_table.map_to(page, frame, flags, frame_allocator) };
+
+    let heap_start_page = Page::containing_address(VirtAddr::new(HEAP_START as u64));
+    let heap_end_page = Page::containing_address(VirtAddr::new((HEAP_END - 1) as u64));
+
+    for page in Page::range_inclusive(heap_start_page, heap_end_page) {
+        unsafe { recursive_page_table.map_to(page, frame_allocator.allocate_frame().unwrap(), flags, frame_allocator); }
+    }
+
     map_to_result.expect("map_to failed").flush();
 }
 
@@ -86,4 +102,22 @@ impl<I> FrameAllocator<Size4KiB> for BootInfoFrameAllocator<I>
     fn allocate_frame(&mut self) -> Option<PhysFrame> {
         self.frames.next()
     }
+}
+
+/// Align downwards. Returns the greatest x with alignment `align`
+/// so that x <= addr. The alignment must be a power of 2.
+pub fn align_down(addr: usize, align: usize) -> usize {
+    if align.is_power_of_two() {
+        addr & !(align - 1)
+    } else if align == 0 {
+        addr
+    } else {
+        panic!("`align` must be a power of 2");
+    }
+}
+
+/// Align upwards. Returns the smallest x with alignment `align`
+/// so that x >= addr. The alignment must be a power of 2.
+pub fn align_up(addr: usize, align: usize) -> usize {
+    align_down(addr + align - 1, align)
 }

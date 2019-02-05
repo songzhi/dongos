@@ -1,6 +1,6 @@
 use core::sync::atomic::{AtomicUsize, Ordering};
-use core::alloc::{AllocErr, GlobalAlloc, Layout};
-use core::ptr::NonNull;
+use core::alloc::{GlobalAlloc, Layout};
+use crate::memory::align_up;
 
 /// A simple allocator that allocates memory linearly and ignores freed memory.
 #[derive(Debug)]
@@ -42,22 +42,4 @@ unsafe impl GlobalAlloc for BumpAllocator {
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
         // do nothing, leak memory
     }
-}
-
-/// Align downwards. Returns the greatest x with alignment `align`
-/// so that x <= addr. The alignment must be a power of 2.
-pub fn align_down(addr: usize, align: usize) -> usize {
-    if align.is_power_of_two() {
-        addr & !(align - 1)
-    } else if align == 0 {
-        addr
-    } else {
-        panic!("`align` must be a power of 2");
-    }
-}
-
-/// Align upwards. Returns the smallest x with alignment `align`
-/// so that x >= addr. The alignment must be a power of 2.
-pub fn align_up(addr: usize, align: usize) -> usize {
-    align_down(addr + align - 1, align)
 }
