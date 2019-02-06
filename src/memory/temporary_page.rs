@@ -11,7 +11,7 @@ use super::entry::EntryFlags;
 use super::table::{Table, Level1};
 
 pub struct TemporaryPage {
-    page: Page,
+    page: Page<Size4KiB>,
 }
 
 impl TemporaryPage {
