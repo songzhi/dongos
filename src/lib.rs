@@ -25,6 +25,7 @@ pub mod context;
 /// Shared data structures
 pub mod common;
 
+pub use consts::*;
 pub use self::start::kernel_main;
 use linked_list_allocator::LockedHeap;
 
