@@ -2,8 +2,7 @@ use bootloader::{bootinfo::BootInfo};
 
 use crate::{println, print};
 use super::HEAP_ALLOCATOR;
-use super::memory::{HEAP_START, HEAP_SIZE};
-use super::memory::table::P4_TABLE_ADDR;
+use super::memory::{HEAP_START, HEAP_SIZE, P4_TABLE_ADDR, FRAME_ALLOCATOR};
 
 #[cfg(not(test))]
 #[no_mangle]
@@ -19,7 +18,10 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
         crate::device::init_noncore();
     };
     x86_64::instructions::interrupts::enable();
+
     P4_TABLE_ADDR.call_once(|| boot_info.p4_table_addr as usize);
+    FRAME_ALLOCATOR.call_once(|| memory::init_frame_allocator(&boot_info.memory_map));
+
     let mut recursive_page_table = unsafe { memory::init(boot_info.p4_table_addr as usize) };
     let mut frame_allocator = memory::init_frame_allocator(&boot_info.memory_map);
     create_example_mapping(&mut recursive_page_table, &mut frame_allocator);

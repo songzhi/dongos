@@ -37,7 +37,7 @@ impl ActivePageTable {
             RecursivePageTable::new(level_4_table).unwrap()
         }
         ActivePageTable {
-            mapper: init_inner(P4_TABLE_ADDR),
+            mapper: init_inner(*P4_TABLE_ADDR),
         }
     }
 

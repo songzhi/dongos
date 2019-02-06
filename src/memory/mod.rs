@@ -3,6 +3,7 @@ use x86_64::structures::paging::{
     FrameAllocator, Mapper, Page, PageTable, PhysFrame, RecursivePageTable, Size4KiB,
 };
 use x86_64::{PhysAddr, VirtAddr};
+use spin::Once;
 
 #[cfg(not(test))]
 pub mod heap;
@@ -16,6 +17,8 @@ pub use self::heap::bump_allocator::BumpAllocator;
 #[cfg(not(test))]
 pub use self::heap::{HEAP_START, HEAP_END, HEAP_SIZE};
 pub use self::table::{ActivePageTable, InactivePageTable, P4_TABLE_ADDR};
+
+pub static FRAME_ALLOCATOR: Once<BootInfoFrameAllocator<impl Iterator<Item=PhysFrame>>> = Once::new();
 
 /// Creates a RecursivePageTable instance from the level 4 address.
 ///
