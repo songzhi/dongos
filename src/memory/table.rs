@@ -5,8 +5,9 @@ use bootloader::bootinfo::BootInfo;
 use x86_64::registers::control::Cr3;
 use x86_64::instructions::tlb;
 use x86_64::structures::paging::Page;
+use spin::Once;
 
-pub static mut P4_TABLE_ADDR: usize = 0;
+pub static P4_TABLE_ADDR: Once<usize> = Once::new();
 
 use super::temporary_page::TemporaryPage;
 

@@ -15,7 +15,7 @@ pub mod temporary_page;
 pub use self::heap::bump_allocator::BumpAllocator;
 #[cfg(not(test))]
 pub use self::heap::{HEAP_START, HEAP_END, HEAP_SIZE};
-pub use self::table::{ActivePageTable, InactivePageTable};
+pub use self::table::{ActivePageTable, InactivePageTable, P4_TABLE_ADDR};
 
 /// Creates a RecursivePageTable instance from the level 4 address.
 ///
