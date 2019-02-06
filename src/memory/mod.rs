@@ -7,10 +7,15 @@ use x86_64::{PhysAddr, VirtAddr};
 #[cfg(not(test))]
 pub mod heap;
 
+pub mod table;
+
+pub mod temporary_page;
+
 #[cfg(not(test))]
 pub use self::heap::bump_allocator::BumpAllocator;
 #[cfg(not(test))]
 pub use self::heap::{HEAP_START, HEAP_END, HEAP_SIZE};
+pub use self::table::{ActivePageTable, InactivePageTable};
 
 /// Creates a RecursivePageTable instance from the level 4 address.
 ///
