@@ -1,5 +1,5 @@
 use core::ops::{Deref, DerefMut};
-use x86_64::structures::paging::{RecursivePageTable, PhysFrame};
+use x86_64::structures::paging::{RecursivePageTable, PhysFrame, PageTable};
 use x86_64::PhysAddr;
 use bootloader::bootinfo::BootInfo;
 use x86_64::registers::control::Cr3;
@@ -52,7 +52,7 @@ impl ActivePageTable {
     }
 
     pub fn flush(&mut self, page: Page) {
-        unsafe { tlb::flush(page.start_address().get()); }
+        unsafe { tlb::flush(page.start_address()); }
     }
 
     pub fn flush_all(&mut self) {
@@ -60,7 +60,7 @@ impl ActivePageTable {
     }
 
     pub fn with<F>(&mut self, table: &mut InactivePageTable, temporary_page: &mut TemporaryPage, f: F)
-        where F: FnOnce(&mut Mapper)
+        where F: FnOnce(&mut RecursivePageTable)
     {
         {
             let backup = Frame::containing_address(PhysicalAddress::new(unsafe { control_regs::cr3() as usize }));
