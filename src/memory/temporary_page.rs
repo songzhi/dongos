@@ -4,7 +4,6 @@ use x86_64::{
     VirtAddr,
     ::structures::paging::{Page, Size4KiB, PhysFrame, PageTableFlags, PageTable}};
 use super::ActivePageTable;
-use super::entry::EntryFlags;
 use super::FRAME_ALLOCATOR;
 
 pub struct TemporaryPage {

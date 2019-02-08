@@ -21,6 +21,7 @@ pub mod device;
 pub mod thread;
 pub mod start;
 pub mod context;
+pub mod consts;
 #[macro_use]
 /// Shared data structures
 pub mod common;
