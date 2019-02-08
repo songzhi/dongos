@@ -13,6 +13,7 @@ x86_64 = "0.4.0"
 pic8259_simple = "0.1.1"
 pc-keyboard = "0.3.1"
 linked_list_allocator="0.6.3"
+raw-cpuid = "6.1.0"
 
 [dependencies.lazy_static]
 version = "1.0"

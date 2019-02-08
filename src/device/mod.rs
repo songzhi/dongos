@@ -1,5 +1,6 @@
 pub mod rtc;
 pub mod pic;
+pub mod cpu;
 
 pub unsafe fn init() {
     pic::PICS.lock().initialize();
