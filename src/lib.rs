@@ -29,11 +29,31 @@ pub mod common;
 pub use consts::*;
 pub use self::start::kernel_main;
 use linked_list_allocator::LockedHeap;
+use core::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
 
 // Heap allocator (disabled during testing)
 #[cfg(not(test))]
 #[cfg_attr(not(test), global_allocator)]
 pub static HEAP_ALLOCATOR: LockedHeap = LockedHeap::empty();
+
+/// A unique number that identifies the current CPU - used for scheduling
+#[thread_local]
+static CPU_ID: AtomicUsize = ATOMIC_USIZE_INIT;
+
+/// Get the current CPU's scheduling ID
+#[inline(always)]
+pub fn cpu_id() -> usize {
+    CPU_ID.load(Ordering::Relaxed)
+}
+
+/// The count of all CPUs that can have work scheduled
+static CPU_COUNT: AtomicUsize = ATOMIC_USIZE_INIT;
+
+/// Get the number of CPUs currently active
+#[inline(always)]
+pub fn cpu_count() -> usize {
+    CPU_COUNT.load(Ordering::Relaxed)
+}
 
 pub unsafe fn exit_qemu() {
     use x86_64::instructions::port::Port;

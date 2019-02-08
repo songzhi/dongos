@@ -36,6 +36,8 @@ pub struct Context {
     pub status: Status,
     /// Context running or not
     pub running: bool,
+    /// CPU ID, if locked
+    pub cpu_id: Option<usize>,
     /// The architecture specific context
     pub arch: arch::Context,
     /// Kernel FX - used to store SIMD and FPU registers on context switch
