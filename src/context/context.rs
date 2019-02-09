@@ -8,7 +8,8 @@ use core::mem;
 use spin::Mutex;
 
 use context::arch;
-use context::memory::{Memory, SharedMemory};
+use context::memory::{Memory, SharedMemory, Tls};
+use sync::WaitMap;
 /// Unique identifier for a context (i.e. `pid`).
 use ::core::sync::atomic::AtomicUsize;
 int_like!(ContextId, AtomicContextId, usize, AtomicUsize);
