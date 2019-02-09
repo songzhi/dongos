@@ -19,6 +19,11 @@ pub use self::heap::{HEAP_START, HEAP_END, HEAP_SIZE};
 pub use self::table::{ActivePageTable, InactivePageTable, P4_TABLE_ADDR};
 
 pub static FRAME_ALLOCATOR: Once<BootInfoFrameAllocator<impl Iterator<Item=PhysFrame>>> = Once::new();
+/// Number of entries per page table
+pub const ENTRY_COUNT: usize = 512;
+
+/// Size of pages
+pub const PAGE_SIZE: usize = 4096;
 
 /// Creates a RecursivePageTable instance from the level 4 address.
 ///

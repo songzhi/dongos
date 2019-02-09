@@ -7,9 +7,12 @@ use core::cmp::Ordering;
 use core::mem;
 use spin::Mutex;
 
+use memory::PAGE_SIZE;
 use context::arch;
 use context::memory::{Memory, SharedMemory, Tls};
 use sync::WaitMap;
+use syscall::data::SigAction;
+use syscall::flag::SIG_DFL;
 /// Unique identifier for a context (i.e. `pid`).
 use ::core::sync::atomic::AtomicUsize;
 int_like!(ContextId, AtomicContextId, usize, AtomicUsize);
@@ -135,14 +138,87 @@ pub struct Context {
     /// User Thread local storage
     pub tls: Option<Tls>,
     /// User grants
-    pub grants: Arc<Mutex<Vec<Grant>>>,
+//    pub grants: Arc<Mutex<Vec<Grant>>>,
     /// The name of the context
     pub name: Arc<Mutex<Box<[u8]>>>,
     /// The current working directory
     pub cwd: Arc<Mutex<Vec<u8>>>,
     /// The open files in the scheme
-    pub files: Arc<Mutex<Vec<Option<FileDescriptor>>>>,
+//    pub files: Arc<Mutex<Vec<Option<FileDescriptor>>>>,
     /// Singal actions
     pub actions: Arc<Mutex<Vec<(SigAction, usize)>>>,
 }
 
+impl Context {
+    pub fn new(id: ContextId) -> Context {
+        let syscall_head = unsafe { Box::from_raw(::HEAP_ALLOCATOR.alloc(Layout::from_size_align_unchecked(PAGE_SIZE, PAGE_SIZE)) as *mut [u8; PAGE_SIZE]) };
+        let syscall_tail = unsafe { Box::from_raw(::HEAP_ALLOCATOR.alloc(Layout::from_size_align_unchecked(PAGE_SIZE, PAGE_SIZE)) as *mut [u8; PAGE_SIZE]) };
+
+        Context {
+            id,
+            pgid: id,
+            ppid: ContextId::from(0),
+            umask: 0o022,
+            status: Status::Blocked,
+            running: false,
+            cpu_id: None,
+            syscall: None,
+            syscall_head,
+            syscall_tail,
+            vfork: false,
+            waitpid: Arc::new(WaitMap::new()),
+            pending: VecDeque::new(),
+            wake: None,
+            arch: arch::Context::new(),
+            kfx: None,
+            kstack: None,
+            ksig: None,
+            ksig_restore: false,
+            image: Vec::new(),
+            heap: None,
+            stack: None,
+            sigstack: None,
+            tls: None,
+//            grants: Arc::new(Mutex::new(Vec::new())),
+            name: Arc::new(Mutex::new(Vec::new().into_boxed_slice())),
+            cwd: Arc::new(Mutex::new(Vec::new())),
+//            files: Arc::new(Mutex::new(Vec::new())),
+            actions: Arc::new(Mutex::new(vec![(
+                                                  SigAction {
+                                                      sa_handler: unsafe { mem::transmute(SIG_DFL) },
+                                                      sa_mask: [0; 2],
+                                                      sa_flags: 0,
+                                                  },
+                                                  0
+                                              ); 128])),
+        }
+    }
+
+    /// Block the context, and return true if it was runnable before being blocked
+    pub fn block(&mut self) -> bool {
+        if self.status == Status::Runnable {
+            self.status = Status::Blocked;
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Unblock context, and return true if it was blocked before being marked runnable
+    pub fn unblock(&mut self) -> bool {
+        if self.status == Status::Blocked {
+            self.status = Status::Runnable;
+
+//            if let Some(cpu_id) = self.cpu_id {
+//                if cpu_id != ::cpu_id() {
+//                    // Send IPI if not on current CPU
+//                    ipi(IpiKind::Wakeup, IpiTarget::Other);
+//                }
+//            }
+
+            true
+        } else {
+            false
+        }
+    }
+}
