@@ -1,10 +1,56 @@
 use core::sync::atomic::Ordering;
 
-use super::context::{arch, contexts, Context, Status, CONTEXT_ID};
+use crate::context::{arch, contexts, Context, Status, CONTEXT_ID};
 use gdt;
 use interrupt;
 use interrupt::irq::PIT_TICKS;
 use time;
+
+unsafe fn update(context: &mut Context, cpu_id: usize) {
+    // Take ownership if not already owned
+    if context.cpu_id == None {
+        context.cpu_id = Some(cpu_id);
+        // println!("{}: take {} {}", cpu_id, context.id, ::core::str::from_utf8_unchecked(&context.name.lock()));
+    }
+
+    // Restore from signal, must only be done from another context to avoid overwriting the stack!
+    if context.ksig_restore && !context.running {
+        let ksig = context.ksig.take().expect("context::switch: ksig not set with ksig_restore");
+        context.arch = ksig.0;
+
+        if let Some(ref mut kfx) = context.kfx {
+            kfx.clone_from_slice(&ksig.1.expect("context::switch: ksig kfx not set with ksig_restore"));
+        } else {
+            panic!("context::switch: kfx not set with ksig_restore");
+        }
+
+        if let Some(ref mut kstack) = context.kstack {
+            kstack.clone_from_slice(&ksig.2.expect("context::switch: ksig kstack not set with ksig_restore"));
+        } else {
+            panic!("context::switch: kstack not set with ksig_restore");
+        }
+
+        context.ksig_restore = false;
+
+        context.unblock();
+    }
+
+    // Unblock when there are pending signals
+    if context.status == Status::Blocked && !context.pending.is_empty() {
+        context.unblock();
+    }
+
+    // Wake from sleep
+    if context.status == Status::Blocked && context.wake.is_some() {
+        let wake = context.wake.expect("context::switch: wake not set");
+
+        let current = time::monotonic();
+        if current.0 > wake.0 || (current.0 == wake.0 && current.1 >= wake.1) {
+            context.wake = None;
+            context.unblock();
+        }
+    }
+}
 
 /// Switch to the next context
 ///
