@@ -3,6 +3,8 @@ use spin::Mutex;
 use x86_64::structures::paging::Page;
 use x86_64::VirtAddr;
 use core::intrinsics;
+use crate::memory::{ActivePageTable, InactivePageTable};
+use crate::memory::temporary_page::TemporaryPage;
 
 #[derive(Clone, Debug)]
 pub enum SharedMemory {
@@ -207,8 +209,8 @@ impl Tls {
     /// Load TLS data from master
     pub unsafe fn load(&mut self) {
         intrinsics::copy(
-            self.master.get() as *const u8,
-            (self.mem.start_address().get() + self.offset) as *mut u8,
+            self.master.as_u64() as *const u8,
+            (self.mem.start_address().as_u64() + self.offset) as *mut u8,
             self.file_size,
         );
     }
