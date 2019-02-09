@@ -1,10 +1,10 @@
 use core::sync::atomic::Ordering;
 
 use crate::context::{arch, contexts, Context, Status, CONTEXT_ID};
-use gdt;
-use interrupt;
-use interrupt::irq::PIT_TICKS;
-use time;
+use crate::gdt;
+use crate::interrupt;
+use crate::interrupt::irq::PIT_TICKS;
+use crate::time;
 
 unsafe fn update(context: &mut Context, cpu_id: usize) {
     // Take ownership if not already owned

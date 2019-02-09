@@ -2,7 +2,7 @@
 //! From [Phil Opp's Blog](http://os.phil-opp.com/remap-the-kernel.html)
 use x86_64::{
     VirtAddr,
-    ::structures::paging::{Page, Size4KiB, PhysFrame, PageTableFlags, PageTable}};
+    structures::paging::{Page, Size4KiB, PhysFrame, PageTableFlags, PageTable}};
 use super::ActivePageTable;
 use super::FRAME_ALLOCATOR;
 

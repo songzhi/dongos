@@ -7,12 +7,14 @@ use core::cmp::Ordering;
 use core::mem;
 use spin::Mutex;
 
-use memory::PAGE_SIZE;
-use context::arch;
-use context::memory::{Memory, SharedMemory, Tls};
-use sync::WaitMap;
-use syscall::data::SigAction;
-use syscall::flag::SIG_DFL;
+use crate::memory::PAGE_SIZE;
+use crate::context::arch;
+use crate::context::memory::{Memory, SharedMemory, Tls};
+use crate::sync::WaitMap;
+use crate::syscall::data::SigAction;
+use crate::syscall::flag::SIG_DFL;
+#[macro_use]
+use crate::common::int_like;
 /// Unique identifier for a context (i.e. `pid`).
 use ::core::sync::atomic::AtomicUsize;
 int_like!(ContextId, AtomicContextId, usize, AtomicUsize);

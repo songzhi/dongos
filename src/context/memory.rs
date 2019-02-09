@@ -1,8 +1,15 @@
 use alloc::sync::{Arc, Weak};
 use spin::Mutex;
-use x86_64::structures::paging::Page;
-use x86_64::VirtAddr;
+use x86_64::{
+    VirtAddr,
+    structures::{
+        paging::Page,
+        paging::MapperFlush,
+        paging::PageTableFlags,
+    },
+};
 use core::intrinsics;
+
 use crate::memory::{ActivePageTable, InactivePageTable};
 use crate::memory::temporary_page::TemporaryPage;
 

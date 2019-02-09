@@ -4,7 +4,6 @@ use alloc::collections::BTreeMap;
 use core::alloc::{GlobalAlloc, Layout};
 use core::mem;
 use core::sync::atomic::Ordering;
-use paging;
 use spin::RwLock;
 
 use crate::memory::ActivePageTable;
