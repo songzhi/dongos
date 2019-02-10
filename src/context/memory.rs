@@ -94,10 +94,8 @@ impl Memory {
         let mut flush_all = MapperFlushAll::new();
 
         for page in self.pages() {
-            let result = unsafe {
-                active_table.map_to(page, allocate_frame().expect("out of frames"), self.flags, FRAME_ALLOCATOR.lock().as_mut().unwrap())
-            };
-            flush_all.consume(result.unwrap());
+            let result = active_table.map(page, self.flags);
+            flush_all.consume(result);
         }
         if clear {
             assert!(self.flags.contains(EntryFlags::WRITABLE));
@@ -170,7 +168,7 @@ impl Memory {
             for page in Page::range_inclusive(start_page, end_page) {
                 if active_table.translate_page(page).is_none() {
                     let result = active_table.map(page, self.flags);
-                    MapperFlush::flush(result);
+                    flush_all.consume(result);
                 }
             }
 
@@ -184,12 +182,17 @@ impl Memory {
         } else if new_size < self.size {
             let start_page = Page::containing_address(VirtAddr::new(self.start.as_u64() + (new_size as u64)));
             let end_page = Page::containing_address(VirtAddr::new(self.start.as_u64() + ((self.size - 1) as u64)));
+
+            let mut flush_all = MapperFlushAll::new();
+
             for page in Page::range_inclusive(start_page, end_page) {
                 if active_table.translate_page(page).is_some() {
                     let result = active_table.unmap(page).unwrap();
-                    MapperFlush::flush(result.0);
+                    flush_all.consume(result.1);
                 }
             }
+
+            flush_all.flush(&mut active_table);
         }
 
         self.size = new_size;
