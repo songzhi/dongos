@@ -14,7 +14,7 @@ use x86_64::{
 };
 use core::intrinsics;
 
-use crate::memory::{ActivePageTable, InactivePageTable, mapper::MapperFlushAll};
+use crate::memory::{ActivePageTable, InactivePageTable, mapper::MapperFlushAll, FRAME_ALLOCATOR, allocate_frame};
 use crate::memory::temporary_page::TemporaryPage;
 
 #[derive(Clone, Debug)]
@@ -94,8 +94,10 @@ impl Memory {
         let mut flush_all = MapperFlushAll::new();
 
         for page in self.pages() {
-            let result = active_table.map_to(page, self.flags);
-            flush_all.consume(result);
+            let result = unsafe {
+                active_table.map_to(page, allocate_frame().expect("out of frames"), self.flags, FRAME_ALLOCATOR.lock().as_mut().unwrap())
+            };
+            flush_all.consume(result.unwrap());
         }
         if clear {
             assert!(self.flags.contains(EntryFlags::WRITABLE));
@@ -107,10 +109,14 @@ impl Memory {
 
     fn unmap(&mut self) {
         let mut active_table = unsafe { ActivePageTable::new() };
+
+        let mut flush_all = MapperFlushAll::new();
+
         for page in self.pages() {
             let result = active_table.unmap(page);
-            MapperFlush::flush(result);
+            flush_all.consume(result.unwrap().1);
         }
+        flush_all.flush(&mut active_table);
     }
 
     /// A complicated operation to move a piece of memory to a new page table
@@ -118,15 +124,19 @@ impl Memory {
     pub fn move_to(&mut self, new_start: VirtAddr, new_table: &mut InactivePageTable, temporary_page: &mut TemporaryPage) {
         let mut active_table = unsafe { ActivePageTable::new() };
 
+        let mut flush_all = MapperFlushAll::new();
+
         for page in self.pages() {
-            let (result, frame) = active_table.unmap_return(page, false);
-            MapperFlush::flush(result);
+            let (frame, result) = active_table.unmap(page).unwrap();
+            flush_all.consume(result);
 
             active_table.with(new_table, temporary_page, |mapper| {
-                let new_page = Page::containing_address(VirtAddr::new(page.start_address().get() - self.start.get() + new_start.get()));
-                let result = mapper.map_to(new_page, frame, self.flags);
+                let new_page = Page::containing_address(VirtAddr::new(page.start_address().as_u64() - self.start.as_u64() + new_start.as_u64()));
+                let result = unsafe {
+                    mapper.map_to(new_page, frame, self.flags, FRAME_ALLOCATOR.lock().as_mut().unwrap())
+                };
                 // This is not the active table, so the flush can be ignored
-                unsafe { result.ignore(); }
+                unsafe { result.unwrap().ignore(); }
             });
         }
 
@@ -136,10 +146,14 @@ impl Memory {
     pub fn remap(&mut self, new_flags: EntryFlags) {
         let mut active_table = unsafe { ActivePageTable::new() };
 
+        let mut flush_all = MapperFlushAll::new();
+
         for page in self.pages() {
-            let result = active_table.remap(page, new_flags);
-            MapperFlush::flush(result);
+            let result = active_table.update_flags(page, new_flags);
+            flush_all.consume(result.unwrap());
         }
+
+        flush_all.flush(&mut active_table);
 
         self.flags = new_flags;
     }
@@ -149,6 +163,8 @@ impl Memory {
 
         //TODO: Calculate page changes to minimize operations
         if new_size > self.size {
+            let mut flush_all = MapperFlushAll::new();
+
             let start_page = Page::containing_address(VirtAddr::new(self.start.get() + self.size));
             let end_page = Page::containing_address(VirtAddr::new(self.start.get() + new_size - 1));
             for page in Page::range_inclusive(start_page, end_page) {
@@ -157,6 +173,8 @@ impl Memory {
                     MapperFlush::flush(result);
                 }
             }
+
+            flush_all.flush(&mut active_table);
 
             if clear {
                 unsafe {

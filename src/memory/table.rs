@@ -10,6 +10,7 @@ use spin::Once;
 pub static P4_TABLE_ADDR: Once<usize> = Once::new();
 
 use super::temporary_page::TemporaryPage;
+use super::FRAME_ALLOCATOR;
 
 pub struct ActivePageTable {
     mapper: RecursivePageTable<'static>,
@@ -84,6 +85,11 @@ impl ActivePageTable {
 
     pub unsafe fn address(&self) -> PhysAddr {
         Cr3::read().0.start_address()
+    }
+
+    pub fn map(&self, page: Page, flags: EntryFlags) {
+        let frame = FRAME_ALLOCATOR.lock().unwrap().allocate_frame().exc;
+        self.map_to(page, frame, flags);
     }
 }
 

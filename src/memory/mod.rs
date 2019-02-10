@@ -3,13 +3,16 @@ use x86_64::structures::paging::{
     FrameAllocator, Mapper, Page, PageTable, PhysFrame, RecursivePageTable, Size4KiB,
 };
 use x86_64::{PhysAddr, VirtAddr};
-use spin::{Mutex};
+use spin::Mutex;
+use core::mem;
+pub use x86_64::{align_down, align_up};
+
 #[cfg(not(test))]
 pub mod heap;
 
 pub mod table;
-
 pub mod temporary_page;
+pub mod mapper;
 
 #[cfg(not(test))]
 pub use self::heap::bump_allocator::BumpAllocator;
@@ -43,7 +46,7 @@ pub unsafe fn init(level_4_table_addr: usize) -> RecursivePageTable<'static> {
 /// Create a FrameAllocator from the passed memory map
 pub fn init_frame_allocator(
     memory_map: &'static MemoryMap,
-) -> BootInfoFrameAllocator<impl Iterator<Item=PhysFrame>> {
+) {
     // get usable regions from memory map
     let regions = memory_map
         .iter()
@@ -55,7 +58,7 @@ pub fn init_frame_allocator(
     // create `PhysFrame` types from the start addresses
     let frames = frame_addresses.map(|addr| PhysFrame::containing_address(PhysAddr::new(addr)));
 
-    BootInfoFrameAllocator { frames }
+    *FRAME_ALLOCATOR.lock() = Some(BootInfoFrameAllocator { frames });
 }
 
 /// Returns the physical address for the given virtual address, or `None` if
@@ -108,20 +111,11 @@ impl<I> FrameAllocator<Size4KiB> for BootInfoFrameAllocator<I>
     }
 }
 
-/// Align downwards. Returns the greatest x with alignment `align`
-/// so that x <= addr. The alignment must be a power of 2.
-pub fn align_down(addr: usize, align: usize) -> usize {
-    if align.is_power_of_two() {
-        addr & !(align - 1)
-    } else if align == 0 {
-        addr
+/// Allocate a range of frames
+pub fn allocate_frame() -> Option<Frame> {
+    if let Some(ref mut allocator) = *FRAME_ALLOCATOR.lock() {
+        allocator.allocate_frame()
     } else {
-        panic!("`align` must be a power of 2");
+        panic!("frame allocator not initialized");
     }
-}
-
-/// Align upwards. Returns the smallest x with alignment `align`
-/// so that x >= addr. The alignment must be a power of 2.
-pub fn align_up(addr: usize, align: usize) -> usize {
-    align_down(addr + align - 1, align)
 }
