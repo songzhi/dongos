@@ -4,8 +4,9 @@ use x86_64::{
     VirtAddr,
     structures::{
         paging::Page,
+        paging::PageRangeInclusive,
         paging::MapperFlush,
-        paging::PageTableFlags,
+        paging::PageTableFlags as EntryFlags,
     },
 };
 use core::intrinsics;
@@ -78,7 +79,7 @@ impl Memory {
         self.flags
     }
 
-    pub fn pages(&self) -> PageIter {
+    pub fn pages(&self) -> PageRangeInclusive {
         let start_page = Page::containing_address(self.start);
         let end_page = Page::containing_address(VirtAddr::new(self.start.get() + self.size - 1));
         Page::range_inclusive(start_page, end_page)

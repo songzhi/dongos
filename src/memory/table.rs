@@ -18,13 +18,13 @@ pub struct ActivePageTable {
 impl Deref for ActivePageTable {
     type Target = RecursivePageTable<'static>;
 
-    fn deref(&self) -> &RecursivePageTable {
+    fn deref(&self) -> &RecursivePageTable<'static> {
         &self.mapper
     }
 }
 
 impl DerefMut for ActivePageTable {
-    fn deref_mut(&mut self) -> &mut RecursivePageTable {
+    fn deref_mut(&mut self) -> &mut RecursivePageTable<'static> {
         &mut self.mapper
     }
 }
