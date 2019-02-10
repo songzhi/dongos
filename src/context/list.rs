@@ -35,7 +35,7 @@ impl ContextList {
         self.map.get(&super::CONTEXT_ID.load(Ordering::SeqCst))
     }
 
-    pub fn iter(&self) -> ::alloc::collections::btree_map::Iter<ContextId, Arc<RwLock<Context>>> {
+    pub fn iter(&self) -> alloc::collections::btree_map::Iter<ContextId, Arc<RwLock<Context>>> {
         self.map.iter()
     }
 
@@ -66,7 +66,7 @@ impl ContextList {
         let context_lock = self.new_context()?;
         {
             let mut context = context_lock.write();
-            let mut fx = unsafe { Box::from_raw(::ALLOCATOR.alloc(Layout::from_size_align_unchecked(512, 16)) as *mut [u8; 512]) };
+            let mut fx = unsafe { Box::from_raw(crate::HEAP_ALLOCATOR.alloc(Layout::from_size_align_unchecked(512, 16)) as *mut [u8; 512]) };
             for b in fx.iter_mut() {
                 *b = 0;
             }

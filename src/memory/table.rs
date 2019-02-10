@@ -37,7 +37,7 @@ impl ActivePageTable {
             RecursivePageTable::new(level_4_table).unwrap()
         }
         ActivePageTable {
-            mapper: init_inner(*P4_TABLE_ADDR),
+            mapper: init_inner(*P4_TABLE_ADDR.r#try().unwrap()),
         }
     }
 
@@ -68,14 +68,14 @@ impl ActivePageTable {
             let p4_table = temporary_page.map_table_frame(backup.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE, self);
 
             // overwrite recursive mapping
-            p4_table[::RECURSIVE_PAGE_PML4].set_frame(table.p4_frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE);
+            p4_table[crate::RECURSIVE_PAGE_PML4].set_frame(table.p4_frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE);
             self.flush_all();
 
             // execute f in the new context
             f(self);
 
             // restore recursive mapping to original p4 table
-            p4_table[::RECURSIVE_PAGE_PML4].set(backup, EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE);
+            p4_table[crate::RECURSIVE_PAGE_PML4].set(backup, EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE);
             self.flush_all();
         }
 
@@ -98,7 +98,7 @@ impl InactivePageTable {
             // now we are able to zero the table
             table.zero();
             // set up recursive mapping for the table
-            table[::RECURSIVE_PAGE_PML4].set_frame(frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE);
+            table[crate::RECURSIVE_PAGE_PML4].set_frame(frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE);
         }
         temporary_page.unmap(active_table);
         InactivePageTable { p4_frame: frame }

@@ -68,7 +68,7 @@ pub unsafe fn switch() -> bool {
         interrupt::pause();
     }
 
-    let cpu_id = ::cpu_id();
+    let cpu_id = crate::cpu_id();
 
     let from_ptr;
     let mut to_ptr = 0 as *mut Context;

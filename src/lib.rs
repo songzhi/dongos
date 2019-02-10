@@ -31,7 +31,7 @@ pub mod sync;
 pub use consts::*;
 pub use self::start::kernel_main;
 use linked_list_allocator::LockedHeap;
-use core::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
+use core::sync::atomic::{AtomicUsize, Ordering};
 
 // Heap allocator (disabled during testing)
 #[cfg(not(test))]
@@ -40,7 +40,7 @@ pub static HEAP_ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 /// A unique number that identifies the current CPU - used for scheduling
 #[thread_local]
-static CPU_ID: AtomicUsize = ATOMIC_USIZE_INIT;
+static CPU_ID: AtomicUsize = AtomicUsize::new(0);
 
 /// Get the current CPU's scheduling ID
 #[inline(always)]
@@ -49,7 +49,7 @@ pub fn cpu_id() -> usize {
 }
 
 /// The count of all CPUs that can have work scheduled
-static CPU_COUNT: AtomicUsize = ATOMIC_USIZE_INIT;
+static CPU_COUNT: AtomicUsize = AtomicUsize::new(1);
 
 /// Get the number of CPUs currently active
 #[inline(always)]

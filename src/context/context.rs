@@ -153,8 +153,8 @@ pub struct Context {
 
 impl Context {
     pub fn new(id: ContextId) -> Context {
-        let syscall_head = unsafe { Box::from_raw(::HEAP_ALLOCATOR.alloc(Layout::from_size_align_unchecked(PAGE_SIZE, PAGE_SIZE)) as *mut [u8; PAGE_SIZE]) };
-        let syscall_tail = unsafe { Box::from_raw(::HEAP_ALLOCATOR.alloc(Layout::from_size_align_unchecked(PAGE_SIZE, PAGE_SIZE)) as *mut [u8; PAGE_SIZE]) };
+        let syscall_head = unsafe { Box::from_raw(crate::HEAP_ALLOCATOR.alloc(Layout::from_size_align_unchecked(PAGE_SIZE, PAGE_SIZE)) as *mut [u8; PAGE_SIZE]) };
+        let syscall_tail = unsafe { Box::from_raw(crate::HEAP_ALLOCATOR.alloc(Layout::from_size_align_unchecked(PAGE_SIZE, PAGE_SIZE)) as *mut [u8; PAGE_SIZE]) };
 
         Context {
             id,
