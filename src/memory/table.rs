@@ -1,5 +1,5 @@
 use core::ops::{Deref, DerefMut};
-use x86_64::structures::paging::{RecursivePageTable, PhysFrame, PageTable, PageTableFlags as EntryFlags};
+use x86_64::structures::paging::{RecursivePageTable, PhysFrame, PageTable, Size4KiB, PageTableFlags as EntryFlags};
 use x86_64::PhysAddr;
 use bootloader::bootinfo::BootInfo;
 use x86_64::registers::control::{Cr3, Cr3Flags};
@@ -11,6 +11,7 @@ pub static P4_TABLE_ADDR: Once<usize> = Once::new();
 
 use super::temporary_page::TemporaryPage;
 use super::FRAME_ALLOCATOR;
+use super::mapper::MapperFlush;
 
 pub struct ActivePageTable {
     mapper: RecursivePageTable<'static>,
@@ -87,9 +88,9 @@ impl ActivePageTable {
         Cr3::read().0.start_address()
     }
 
-    pub fn map(&self, page: Page, flags: EntryFlags) {
-        let frame = FRAME_ALLOCATOR.lock().unwrap().allocate_frame().exc;
-        self.map_to(page, frame, flags);
+    pub fn map(&self, page: Page, flags: EntryFlags) -> MapperFlush<Size4KiB> {
+        let frame = FRAME_ALLOCATOR.lock().unwrap().allocate_frame().unwrap();
+        self.map_to(page, frame, flags, FRAME_ALLOCATOR.lock().as_mut().unwrap()).unwrap()
     }
 }
 
