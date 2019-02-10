@@ -14,9 +14,9 @@ use crate::sync::WaitMap;
 use crate::syscall::data::SigAction;
 use crate::syscall::flag::SIG_DFL;
 #[macro_use]
-use crate::common::int_like;
+use crate::common;
 /// Unique identifier for a context (i.e. `pid`).
-use ::core::sync::atomic::AtomicUsize;
+use core::sync::atomic::AtomicUsize;
 int_like!(ContextId, AtomicContextId, usize, AtomicUsize);
 
 /// The status of a context - used for scheduling
