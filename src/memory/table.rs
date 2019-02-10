@@ -75,7 +75,7 @@ impl ActivePageTable {
             f(self);
 
             // restore recursive mapping to original p4 table
-            p4_table[crate::RECURSIVE_PAGE_PML4].set(backup, EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE);
+            p4_table[crate::RECURSIVE_PAGE_PML4].set_frame(backup, EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE);
             self.flush_all();
         }
 

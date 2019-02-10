@@ -5,7 +5,7 @@ use x86_64::{
     structures::paging::{Page, Size4KiB, PhysFrame, PageTableFlags, PageTable, Mapper}, };
 use super::ActivePageTable;
 use super::FRAME_ALLOCATOR;
-
+use core::borrow::BorrowMut;
 pub struct TemporaryPage {
     page: Page<Size4KiB>,
 }
@@ -25,7 +25,7 @@ impl TemporaryPage {
     /// Returns the start address of the temporary page.
     pub fn map(&mut self, frame: PhysFrame, flags: PageTableFlags, active_table: &mut ActivePageTable) -> VirtAddr {
         assert!(active_table.translate_page(self.page).is_none(), "temporary page is already mapped");
-        let result = unsafe { active_table.map_to(self.page, frame, flags, *FRAME_ALLOCATOR).unwrap() };
+        let result = unsafe { active_table.map_to(self.page, frame, flags, FRAME_ALLOCATOR.lock().as_mut().unwrap()).unwrap() };
 
         result.flush();
         self.page.start_address()

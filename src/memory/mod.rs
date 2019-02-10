@@ -3,8 +3,7 @@ use x86_64::structures::paging::{
     FrameAllocator, Mapper, Page, PageTable, PhysFrame, RecursivePageTable, Size4KiB,
 };
 use x86_64::{PhysAddr, VirtAddr};
-use spin::Once;
-
+use spin::{Mutex};
 #[cfg(not(test))]
 pub mod heap;
 
@@ -18,7 +17,7 @@ pub use self::heap::bump_allocator::BumpAllocator;
 pub use self::heap::{HEAP_START, HEAP_END, HEAP_SIZE};
 pub use self::table::{ActivePageTable, InactivePageTable, P4_TABLE_ADDR};
 
-pub static FRAME_ALLOCATOR: Once<BootInfoFrameAllocator<impl Iterator<Item=PhysFrame>>> = Once::new();
+pub static FRAME_ALLOCATOR: Mutex<Option<BootInfoFrameAllocator<impl Iterator<Item=PhysFrame>>>> = Mutex::new(None);
 /// Number of entries per page table
 pub const ENTRY_COUNT: usize = 512;
 
