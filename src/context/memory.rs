@@ -7,13 +7,14 @@ use x86_64::{
             PageRangeInclusive,
             Page,
             MapperFlush,
+            Mapper,
             PageTableFlags as EntryFlags,
         }
     },
 };
 use core::intrinsics;
 
-use crate::memory::{ActivePageTable, InactivePageTable};
+use crate::memory::{ActivePageTable, InactivePageTable, mapper::MapperFlushAll};
 use crate::memory::temporary_page::TemporaryPage;
 
 #[derive(Clone, Debug)]
@@ -90,9 +91,11 @@ impl Memory {
     fn map(&mut self, clear: bool) {
         let mut active_table = unsafe { ActivePageTable::new() };
 
+        let mut flush_all = MapperFlushAll::new();
+
         for page in self.pages() {
-            let result = active_table.map(page, self.flags);
-            MapperFlush::flush(result);
+            let result = active_table.map_to(page, self.flags);
+            flush_all.consume(result);
         }
         if clear {
             assert!(self.flags.contains(EntryFlags::WRITABLE));
@@ -146,7 +149,6 @@ impl Memory {
 
         //TODO: Calculate page changes to minimize operations
         if new_size > self.size {
-
             let start_page = Page::containing_address(VirtAddr::new(self.start.get() + self.size));
             let end_page = Page::containing_address(VirtAddr::new(self.start.get() + new_size - 1));
             for page in Page::range_inclusive(start_page, end_page) {
@@ -158,20 +160,18 @@ impl Memory {
 
             if clear {
                 unsafe {
-                    intrinsics::write_bytes((self.start.get() + self.size) as *mut u8, 0, new_size - self.size);
+                    intrinsics::write_bytes((self.start.as_u64() + self.size as u64) as *mut u8, 0, new_size - self.size);
                 }
             }
         } else if new_size < self.size {
-
-            let start_page = Page::containing_address(VirtAddr::new(self.start.get() + new_size));
-            let end_page = Page::containing_address(VirtAddr::new(self.start.get() + self.size - 1));
+            let start_page = Page::containing_address(VirtAddr::new(self.start.as_u64() + (new_size as u64)));
+            let end_page = Page::containing_address(VirtAddr::new(self.start.as_u64() + ((self.size - 1) as u64)));
             for page in Page::range_inclusive(start_page, end_page) {
                 if active_table.translate_page(page).is_some() {
-                    let result = active_table.unmap(page);
-                    MapperFlush::flush(result);
+                    let result = active_table.unmap(page).unwrap();
+                    MapperFlush::flush(result.0);
                 }
             }
-
         }
 
         self.size = new_size;
@@ -197,7 +197,7 @@ impl Tls {
     pub unsafe fn load(&mut self) {
         intrinsics::copy(
             self.master.as_u64() as *const u8,
-            (self.mem.start_address().as_u64() + self.offset) as *mut u8,
+            (self.mem.start_address().as_u64() as usize + self.offset) as *mut u8,
             self.file_size,
         );
     }
