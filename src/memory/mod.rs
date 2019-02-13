@@ -34,7 +34,7 @@ pub const PAGE_SIZE: usize = 4096;
 /// Must be called once, and only once,
 pub fn init(memory_map: &'static MemoryMap, kernel_start: usize, kernel_end: usize) {
     unsafe { MEMORY_MAP = Some(memory_map); }
-    init_frame_allocator(memory_map, kernel_start, kernel_end);
+    *FRAME_ALLOCATOR.lock() = Some(BumpAllocator::new(kernel_start, kernel_end, MemoryAreaIter::new(MemoryRegionType::Usable)));
 }
 
 /// Creates a RecursivePageTable instance from the level 4 address.
@@ -51,18 +51,6 @@ pub unsafe fn new_recursive_page_table(level_4_table_addr: usize) -> RecursivePa
         RecursivePageTable::new(level_4_table).unwrap()
     }
     inner(level_4_table_addr)
-}
-
-/// Create a FrameAllocator from the passed memory map
-pub fn init_frame_allocator(
-    memory_map: &'static MemoryMap, kernel_start: usize, kernel_end: usize,
-) {
-    use alloc::prelude::Vec;
-    // get usable regions from memory map
-    let areas = memory_map
-        .iter()
-        .filter(|r| r.region_type == MemoryRegionType::Usable);
-    *FRAME_ALLOCATOR.lock() = Some(BumpAllocator::new(kernel_start, kernel_end, areas));
 }
 
 /// Returns the physical address for the given virtual address, or `None` if

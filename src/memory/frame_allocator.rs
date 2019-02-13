@@ -2,18 +2,18 @@ use x86_64::structures::paging::{PhysFrame, PageRangeInclusive, FrameAllocator a
 use x86_64::PhysAddr;
 use bootloader::bootinfo::{MemoryMap, MemoryRegion, MemoryRegionType};
 use core::slice::Iter;
-use super::FrameAllocator;
+use super::{FrameAllocator, MemoryAreaIter};
 
 pub struct BumpAllocator {
     next_free_frame: PhysFrame,
     current_area: Option<&'static MemoryRegion>,
-    areas: Iter<'static, MemoryRegion>,
+    areas: MemoryAreaIter,
     kernel_start: PhysFrame,
     kernel_end: PhysFrame,
 }
 
 impl BumpAllocator {
-    pub fn new(kernel_start: usize, kernel_end: usize, memory_areas: impl Iterator<Item=MemoryRegion>) -> Self {
+    pub fn new(kernel_start: usize, kernel_end: usize, memory_areas: MemoryAreaIter) -> Self {
         let mut allocator = Self {
             next_free_frame: PhysFrame::containing_address(PhysAddr::new(0)),
             current_area: None,
