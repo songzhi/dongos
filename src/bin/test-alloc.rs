@@ -38,8 +38,8 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
     };
 
     use alloc::vec;
-    let v = vec![1, 2, 3];
-    assert_eq!(*v.last().unwrap(), 3);
+    let v = vec![1, 2, 3, 4];
+    assert_eq!(*v.last().unwrap(), 4);
 
     serial_println!("ok");
 
