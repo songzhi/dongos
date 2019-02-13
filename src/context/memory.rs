@@ -14,7 +14,7 @@ use x86_64::{
 };
 use core::intrinsics;
 
-use crate::memory::{ActivePageTable, InactivePageTable, mapper::MapperFlushAll, FRAME_ALLOCATOR, allocate_frame};
+use crate::memory::{ActivePageTable, InactivePageTable, mapper::MapperFlushAll, FRAME_ALLOCATOR};
 use crate::memory::temporary_page::TemporaryPage;
 
 #[derive(Clone, Debug)]
