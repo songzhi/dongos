@@ -16,8 +16,6 @@ pub mod temporary_page;
 pub mod mapper;
 pub mod frame_allocator;
 
-#[cfg(not(test))]
-pub use self::heap::{HEAP_START, HEAP_END, HEAP_SIZE};
 pub use self::table::{ActivePageTable, InactivePageTable, P4_TABLE_ADDR};
 use self::frame_allocator::BumpAllocator;
 

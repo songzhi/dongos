@@ -1,6 +1,10 @@
 #![no_std]
 #![cfg_attr(not(test), no_main)]
 #![cfg_attr(test, allow(dead_code, unused_macros, unused_imports))]
+#![feature(alloc)]
+
+#[macro_use]
+extern crate alloc;
 
 use bootloader::{bootinfo::BootInfo, entry_point, bootinfo::MemoryRegionType};
 use dongos::{exit_qemu, serial_println};
@@ -33,6 +37,9 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
         active_page_table
     };
 
+    use alloc::vec;
+    let v = vec![1, 2, 3];
+    assert_eq!(*v.last().unwrap(), 3);
 
     serial_println!("ok");
 
