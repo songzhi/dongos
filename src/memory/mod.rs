@@ -113,6 +113,9 @@ pub fn allocate_frame() -> Option<PhysFrame> {
 pub trait FrameAllocator {
     fn free_frames(&self) -> usize;
     fn used_frames(&self) -> usize;
-    fn allocate_frames(&mut self, size: usize) -> Option<Frame>;
+    fn allocate_frames(&mut self, size: usize) -> Option<PhysFrame>;
+    fn allocate_frame(&mut self) -> Option<PhysFrame> {
+        self.allocate_frames(1)
+    }
     fn deallocate_frames(&mut self, frame: Frame, size: usize);
 }
