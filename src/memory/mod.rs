@@ -101,23 +101,6 @@ pub fn create_example_mapping(
     map_to_result.expect("map_to failed").flush();
 }
 
-
-pub struct BootInfoFrameAllocator<I>
-    where
-        I: Iterator<Item=PhysFrame>,
-{
-    frames: I,
-}
-
-impl<I> FrameAllocator<Size4KiB> for BootInfoFrameAllocator<I>
-    where
-        I: Iterator<Item=PhysFrame>,
-{
-    fn allocate_frame(&mut self) -> Option<PhysFrame> {
-        self.frames.next()
-    }
-}
-
 /// Allocate a range of frames
 pub fn allocate_frame() -> Option<PhysFrame> {
     if let Some(ref mut allocator) = *FRAME_ALLOCATOR.lock() {
@@ -125,4 +108,11 @@ pub fn allocate_frame() -> Option<PhysFrame> {
     } else {
         panic!("frame allocator not initialized");
     }
+}
+
+pub trait FrameAllocator {
+    fn free_frames(&self) -> usize;
+    fn used_frames(&self) -> usize;
+    fn allocate_frames(&mut self, size: usize) -> Option<Frame>;
+    fn deallocate_frames(&mut self, frame: Frame, size: usize);
 }
