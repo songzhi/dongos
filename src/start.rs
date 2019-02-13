@@ -1,4 +1,4 @@
-use bootloader::{bootinfo::BootInfo};
+use bootloader::{bootinfo::{BootInfo, MemoryRegionType}};
 
 use crate::{println, print};
 use super::HEAP_ALLOCATOR;
@@ -19,8 +19,14 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
     };
     x86_64::instructions::interrupts::enable();
 
-    P4_TABLE_ADDR.call_once(|| boot_info.p4_table_addr as usize);
-    memory::init(&boot_info.memory_map, 0, 4096);
+    let kernel_end = {
+        let end_area = boot_info.memory_map
+            .iter()
+            .filter(|area| area.region_type == MemoryRegionType::Kernel)
+            .last().unwrap();
+        end_area.range.end_addr() as usize
+    };
+    memory::init(boot_info, 0, kernel_end);
 
     let mut recursive_page_table = unsafe { memory::new_recursive_page_table(boot_info.p4_table_addr as usize) };
     create_example_mapping(&mut recursive_page_table, FRAME_ALLOCATOR.lock().as_mut().unwrap());
@@ -29,20 +35,6 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
     // 打印：new！
     unsafe { (0xdeadbeaf900 as *mut u64).write_volatile(0xf021f077f065f04e) };
 
-    {
-        use alloc::boxed::Box;
-        use alloc::prelude::*;
-        let mut heap_test = Box::new(42);
-        *heap_test -= 15;
-        let heap_test2 = Box::new("hello");
-        println!("{:?} {:?}", heap_test, heap_test2);
-
-        let mut vec_test = vec![1, 2, 3, 4, 5, 6, 7];
-        vec_test[3] = 42;
-        for i in &vec_test {
-            print!("{} ", i);
-        }
-    }
 
     println!("It did not crash!");
     crate::hlt_loop();

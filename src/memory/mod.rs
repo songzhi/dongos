@@ -1,4 +1,4 @@
-use bootloader::bootinfo::{MemoryMap, MemoryRegionType, MemoryRegion};
+use bootloader::bootinfo::{MemoryMap, MemoryRegionType, MemoryRegion, BootInfo};
 use x86_64::structures::paging::{
     FrameAllocator as SimpleFrameAllocator, FrameDeallocator, Mapper, Page, PageTable, PhysFrame, RecursivePageTable, Size4KiB,
 };
@@ -32,8 +32,9 @@ pub const PAGE_SIZE: usize = 4096;
 
 /// Init memory module
 /// Must be called once, and only once,
-pub fn init(memory_map: &'static MemoryMap, kernel_start: usize, kernel_end: usize) {
-    unsafe { MEMORY_MAP = Some(memory_map); }
+pub fn init(boot_info: &'static BootInfo, kernel_start: usize, kernel_end: usize) {
+    P4_TABLE_ADDR.call_once(|| boot_info.p4_table_addr as usize);
+    unsafe { MEMORY_MAP = Some(&boot_info.memory_map); }
     *FRAME_ALLOCATOR.lock() = Some(BumpAllocator::new(kernel_start, kernel_end, MemoryAreaIter::new(MemoryRegionType::Usable)));
 }
 
@@ -104,14 +105,14 @@ pub trait FrameAllocator: SimpleFrameAllocator<Size4KiB> + FrameDeallocator<Size
 
 #[derive(Clone)]
 pub struct MemoryAreaIter {
-    _type: MemoryRegionType,
+    area_type: MemoryRegionType,
     i: usize,
 }
 
 impl MemoryAreaIter {
-    fn new(_type: MemoryRegionType) -> Self {
+    fn new(area_type: MemoryRegionType) -> Self {
         MemoryAreaIter {
-            _type,
+            area_type,
             i: 0,
         }
     }
@@ -123,7 +124,7 @@ impl Iterator for MemoryAreaIter {
         while self.i < unsafe { MEMORY_MAP.unwrap().len() } {
             let entry = unsafe { &MEMORY_MAP.unwrap()[self.i] };
             self.i += 1;
-            if entry._type == self._type {
+            if entry.region_type == self.area_type {
                 return Some(entry);
             }
         }
