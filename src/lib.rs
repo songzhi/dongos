@@ -23,7 +23,6 @@ pub mod start;
 pub mod context;
 pub mod consts;
 #[macro_use]
-/// Shared data structures
 pub mod common;
 /// Synchronization primitives
 pub mod sync;

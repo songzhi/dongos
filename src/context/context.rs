@@ -13,7 +13,7 @@ use crate::context::memory::{Memory, SharedMemory, Tls};
 use crate::sync::WaitMap;
 use crate::syscall::data::SigAction;
 use crate::syscall::flag::SIG_DFL;
-use crate::common::int_like;
+use crate::int_like;
 /// Unique identifier for a context (i.e. `pid`).
 use core::sync::atomic::AtomicUsize;
 int_like!(ContextId, AtomicContextId, usize, AtomicUsize);
