@@ -5,6 +5,7 @@ use crate::gdt;
 use crate::interrupt;
 use crate::interrupt::irq::PIT_TICKS;
 use crate::time;
+use super::signal::signal_handler;
 
 unsafe fn update(context: &mut Context, cpu_id: usize) {
     // Take ownership if not already owned

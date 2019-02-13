@@ -14,6 +14,7 @@ mod context;
 mod list;
 mod switch;
 pub mod memory;
+pub mod signal;
 #[path = "arch/x86_64.rs"]
 mod arch;
 
