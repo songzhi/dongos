@@ -20,10 +20,10 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
     x86_64::instructions::interrupts::enable();
 
     P4_TABLE_ADDR.call_once(|| boot_info.p4_table_addr as usize);
-    memory::init_frame_allocator(&boot_info.memory_map);
+    memory::init(&boot_info.memory_map, 0, 4096);
 
-    let mut recursive_page_table = unsafe { memory::init(boot_info.p4_table_addr as usize) };
-    create_example_mapping(&mut recursive_page_table, &mut FRAME_ALLOCATOR.lock());
+    let mut recursive_page_table = unsafe { memory::new_recursive_page_table(boot_info.p4_table_addr as usize) };
+    create_example_mapping(&mut recursive_page_table, FRAME_ALLOCATOR.lock().as_mut().unwrap());
 
     unsafe { HEAP_ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE); }
     // 打印：new！
