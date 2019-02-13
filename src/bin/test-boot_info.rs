@@ -15,8 +15,6 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
         dongos::device::init_noncore();
     }
     x86_64::instructions::int3();
-    let count = boot_info.memory_map.iter().filter(|region| region.region_type == MemoryRegionType::Kernel).count();
-    assert_eq!(count, 1);
     serial_println!("ok");
 
     unsafe {
