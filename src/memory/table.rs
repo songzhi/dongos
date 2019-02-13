@@ -11,7 +11,7 @@ pub static P4_TABLE_ADDR: Once<usize> = Once::new();
 
 pub use x86_64::structures::paging::{Mapper, FrameAllocator};
 use super::temporary_page::TemporaryPage;
-use super::FRAME_ALLOCATOR;
+use super::{FRAME_ALLOCATOR, allocate_frames};
 use super::mapper::MapperFlush;
 
 pub struct ActivePageTable {
@@ -89,9 +89,11 @@ impl ActivePageTable {
         Cr3::read().0.start_address()
     }
 
-    pub fn map(&self, page: Page, flags: EntryFlags) -> MapperFlush<Size4KiB> {
-        let frame = FRAME_ALLOCATOR.lock().unwrap().allocate_frame().unwrap();
-        self.map_to(page, frame, flags, FRAME_ALLOCATOR.lock().as_mut().unwrap()).unwrap()
+    pub fn map(&mut self, page: Page, flags: EntryFlags) -> MapperFlush<Size4KiB> {
+        let frame = allocate_frames(1).unwrap();
+        unsafe {
+            self.map_to(page, frame, flags, FRAME_ALLOCATOR.lock().as_mut().unwrap()).unwrap()
+        }
     }
 }
 

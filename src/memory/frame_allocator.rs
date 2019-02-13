@@ -13,7 +13,7 @@ pub struct BumpAllocator {
 }
 
 impl BumpAllocator {
-    pub fn new(kernel_start: usize, kernel_end: usize, memory_areas: Iter<'static, MemoryRegion>) -> Self {
+    pub fn new(kernel_start: usize, kernel_end: usize, memory_areas: impl Iterator<Item=MemoryRegion>) -> Self {
         let mut allocator = Self {
             next_free_frame: PhysFrame::containing_address(PhysAddr::new(0)),
             current_area: None,

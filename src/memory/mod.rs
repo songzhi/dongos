@@ -22,6 +22,8 @@ pub use self::table::{ActivePageTable, InactivePageTable, P4_TABLE_ADDR};
 use self::frame_allocator::BumpAllocator;
 
 pub static FRAME_ALLOCATOR: Mutex<Option<BumpAllocator>> = Mutex::new(None);
+static mut MEMORY_MAP: Option<&'static MemoryMap> = None;
+
 /// Number of entries per page table
 pub const ENTRY_COUNT: usize = 512;
 
@@ -31,6 +33,7 @@ pub const PAGE_SIZE: usize = 4096;
 /// Init memory module
 /// Must be called once, and only once,
 pub fn init(memory_map: &'static MemoryMap, kernel_start: usize, kernel_end: usize) {
+    unsafe { MEMORY_MAP = Some(memory_map); }
     init_frame_allocator(memory_map, kernel_start, kernel_end);
 }
 
@@ -42,12 +45,12 @@ pub unsafe fn new_recursive_page_table(level_4_table_addr: usize) -> RecursivePa
     /// Rust currently treats the whole body of unsafe functions as an unsafe
     /// block, which makes it difficult to see which operations are unsafe. To
     /// limit the scope of unsafe we use a safe inner function.
-    fn init_inner(level_4_table_addr: usize) -> RecursivePageTable<'static> {
+    fn inner(level_4_table_addr: usize) -> RecursivePageTable<'static> {
         let level_4_table_ptr = level_4_table_addr as *mut PageTable;
         let level_4_table = unsafe { &mut *level_4_table_ptr };
         RecursivePageTable::new(level_4_table).unwrap()
     }
-    init_inner(level_4_table_addr)
+    inner(level_4_table_addr)
 }
 
 /// Create a FrameAllocator from the passed memory map
@@ -57,11 +60,9 @@ pub fn init_frame_allocator(
     use alloc::prelude::Vec;
     // get usable regions from memory map
     let areas = memory_map
-        .to_vec()
-        .into_iter()
+        .iter()
         .filter(|r| r.region_type == MemoryRegionType::Usable);
-    let areas: Vec<MemoryRegion> = areas.collect();
-    *FRAME_ALLOCATOR.lock() = Some(BumpAllocator::new(kernel_start, kernel_end, areas.iter()));
+    *FRAME_ALLOCATOR.lock() = Some(BumpAllocator::new(kernel_start, kernel_end, areas));
 }
 
 /// Returns the physical address for the given virtual address, or `None` if
@@ -111,4 +112,33 @@ pub trait FrameAllocator: SimpleFrameAllocator<Size4KiB> + FrameDeallocator<Size
     fn used_frames(&self) -> usize;
     fn allocate_frames(&mut self, count: usize) -> Option<PhysFrame>;
     fn deallocate_frames(&mut self, frame: PhysFrame, count: usize);
+}
+
+#[derive(Clone)]
+pub struct MemoryAreaIter {
+    _type: MemoryRegionType,
+    i: usize,
+}
+
+impl MemoryAreaIter {
+    fn new(_type: MemoryRegionType) -> Self {
+        MemoryAreaIter {
+            _type,
+            i: 0,
+        }
+    }
+}
+
+impl Iterator for MemoryAreaIter {
+    type Item = &'static MemoryRegion;
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.i < unsafe { MEMORY_MAP.unwrap().len() } {
+            let entry = unsafe { &MEMORY_MAP.unwrap()[self.i] };
+            self.i += 1;
+            if entry._type == self._type {
+                return Some(entry);
+            }
+        }
+        None
+    }
 }

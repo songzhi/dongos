@@ -134,7 +134,7 @@ impl Memory {
                     mapper.map_to(new_page, frame, self.flags, FRAME_ALLOCATOR.lock().as_mut().unwrap())
                 };
                 // This is not the active table, so the flush can be ignored
-                unsafe { result.unwrap().ignore(); }
+                result.unwrap().ignore();
             });
         }
 
