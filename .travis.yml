@@ -21,8 +21,6 @@ branches:
     - trying
     # Build pull requests.
     - master
-    # Build post braches
-    - /^post-.*$/
 
 cache:
   directories:
