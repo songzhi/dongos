@@ -1,6 +1,6 @@
 use bootloader::bootinfo::{MemoryMap, MemoryRegionType, MemoryRegion};
 use x86_64::structures::paging::{
-    FrameAllocator, Mapper, Page, PageTable, PhysFrame, RecursivePageTable, Size4KiB,
+    FrameAllocator as SimpleFrameAllocator, FrameDeallocator, Mapper, Page, PageTable, PhysFrame, RecursivePageTable, Size4KiB,
 };
 use x86_64::{PhysAddr, VirtAddr};
 use spin::Mutex;
@@ -28,11 +28,17 @@ pub const ENTRY_COUNT: usize = 512;
 /// Size of pages
 pub const PAGE_SIZE: usize = 4096;
 
+/// Init memory module
+/// Must be called once, and only once,
+pub fn init(memory_map: &'static MemoryMap, kernel_start: usize, kernel_end: usize) {
+    init_frame_allocator(memory_map, kernel_start, kernel_end);
+}
+
 /// Creates a RecursivePageTable instance from the level 4 address.
 ///
 /// This function is unsafe because it can break memory safety if an invalid
 /// address is passed.
-pub unsafe fn init(level_4_table_addr: usize) -> RecursivePageTable<'static> {
+pub unsafe fn new_recursive_page_table(level_4_table_addr: usize) -> RecursivePageTable<'static> {
     /// Rust currently treats the whole body of unsafe functions as an unsafe
     /// block, which makes it difficult to see which operations are unsafe. To
     /// limit the scope of unsafe we use a safe inner function.
@@ -48,9 +54,11 @@ pub unsafe fn init(level_4_table_addr: usize) -> RecursivePageTable<'static> {
 pub fn init_frame_allocator(
     memory_map: &'static MemoryMap, kernel_start: usize, kernel_end: usize,
 ) {
+    use alloc::prelude::Vec;
     // get usable regions from memory map
     let areas = memory_map
-        .iter()
+        .to_vec()
+        .into_iter()
         .filter(|r| r.region_type == MemoryRegionType::Usable);
     let areas: Vec<MemoryRegion> = areas.collect();
     *FRAME_ALLOCATOR.lock() = Some(BumpAllocator::new(kernel_start, kernel_end, areas.iter()));
@@ -69,7 +77,7 @@ pub fn translate_addr(addr: u64, recursive_page_table: &RecursivePageTable) -> O
 
 pub fn create_example_mapping(
     recursive_page_table: &mut RecursivePageTable,
-    frame_allocator: &mut impl FrameAllocator<Size4KiB>,
+    frame_allocator: &mut BumpAllocator,
 ) {
     use x86_64::structures::paging::PageTableFlags as Flags;
 
@@ -98,12 +106,9 @@ pub fn allocate_frames(count: usize) -> Option<PhysFrame> {
     }
 }
 
-pub trait FrameAllocator {
+pub trait FrameAllocator: SimpleFrameAllocator<Size4KiB> + FrameDeallocator<Size4KiB> {
     fn free_frames(&self) -> usize;
     fn used_frames(&self) -> usize;
-    fn allocate_frames(&mut self, size: usize) -> Option<PhysFrame>;
-    fn allocate_frame(&mut self) -> Option<PhysFrame> {
-        self.allocate_frames(1)
-    }
-    fn deallocate_frames(&mut self, frame: Frame, size: usize);
+    fn allocate_frames(&mut self, count: usize) -> Option<PhysFrame>;
+    fn deallocate_frames(&mut self, frame: PhysFrame, count: usize);
 }

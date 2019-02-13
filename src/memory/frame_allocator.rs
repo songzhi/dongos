@@ -1,4 +1,4 @@
-use x86_64::structures::paging::{PhysFrame, PageRangeInclusive};
+use x86_64::structures::paging::{PhysFrame, PageRangeInclusive, FrameAllocator as SimpleFrameAllocator, FrameDeallocator, Size4KiB};
 use x86_64::PhysAddr;
 use bootloader::bootinfo::{MemoryMap, MemoryRegion, MemoryRegionType};
 use core::slice::Iter;
@@ -82,7 +82,7 @@ impl FrameAllocator for BumpAllocator {
         count
     }
 
-    fn allocate_frames(&mut self, count: usize) -> Option<Frame> {
+    fn allocate_frames(&mut self, count: usize) -> Option<PhysFrame> {
         if count == 0 {
             None
         } else if let Some(area) = self.current_area {
@@ -102,7 +102,7 @@ impl FrameAllocator for BumpAllocator {
                 self.next_free_frame = self.kernel_end + 1;
             } else {
                 // frame is unused, increment `next_free_frame` and return it
-                self.next_free_frame += count;
+                self.next_free_frame += count as u64;
                 return Some(start_frame);
             }
             // `frame` was not valid, try it again with the updated `next_free_frame`
@@ -112,7 +112,19 @@ impl FrameAllocator for BumpAllocator {
         }
     }
 
-    fn deallocate_frames(&mut self, _frame: Frame, _count: usize) {
+    fn deallocate_frames(&mut self, _frame: PhysFrame, _count: usize) {
         //panic!("BumpAllocator::deallocate_frame: not supported: {:?}", frame);
+    }
+}
+
+impl SimpleFrameAllocator<Size4KiB> for BumpAllocator {
+    fn allocate_frame(&mut self) -> Option<PhysFrame> {
+        self.allocate_frames(1)
+    }
+}
+
+impl FrameDeallocator<Size4KiB> for BumpAllocator {
+    fn deallocate_frame(&mut self, frame: PhysFrame) {
+        self.deallocate_frames(frame, 1);
     }
 }

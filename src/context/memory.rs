@@ -84,7 +84,7 @@ impl Memory {
 
     pub fn pages(&self) -> PageRangeInclusive {
         let start_page = Page::containing_address(self.start);
-        let end_page = Page::containing_address(VirtAddr::new(self.start.get() + self.size - 1));
+        let end_page = Page::containing_address(VirtAddr::new(self.start.as_u64() + self.size as u64 - 1));
         Page::range_inclusive(start_page, end_page)
     }
 
@@ -100,7 +100,7 @@ impl Memory {
         if clear {
             assert!(self.flags.contains(EntryFlags::WRITABLE));
             unsafe {
-                intrinsics::write_bytes(self.start_address().get() as *mut u8, 0, self.size);
+                intrinsics::write_bytes(self.start_address().as_u64() as *mut u8, 0, self.size);
             }
         }
     }
@@ -163,8 +163,8 @@ impl Memory {
         if new_size > self.size {
             let mut flush_all = MapperFlushAll::new();
 
-            let start_page = Page::containing_address(VirtAddr::new(self.start.get() + self.size));
-            let end_page = Page::containing_address(VirtAddr::new(self.start.get() + new_size - 1));
+            let start_page = Page::containing_address(VirtAddr::new(self.start.as_u64() + self.size as u64));
+            let end_page = Page::containing_address(VirtAddr::new(self.start.as_u64() + new_size as u64 - 1));
             for page in Page::range_inclusive(start_page, end_page) {
                 if active_table.translate_page(page).is_none() {
                     let result = active_table.map(page, self.flags);
