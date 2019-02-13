@@ -22,8 +22,8 @@ unsafe impl GlobalAlloc for BumpAllocator {
         loop {
             // load current state of the `next` field
             let current_next = self.next.load(Ordering::Relaxed);
-            let alloc_start = align_up(current_next, layout.align());
-            let alloc_end = alloc_start.saturating_add(layout.size());
+            let alloc_start = align_up(current_next as u64, layout.align() as u64);
+            let alloc_end = alloc_start.saturating_add(layout.size() as u64) as usize;
 
             if alloc_end <= self.heap_end {
                 // update the `next` pointer if it still has the value `current_next`

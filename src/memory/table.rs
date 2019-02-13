@@ -9,6 +9,7 @@ use spin::Once;
 
 pub static P4_TABLE_ADDR: Once<usize> = Once::new();
 
+pub use x86_64::structures::paging::{Mapper, FrameAllocator};
 use super::temporary_page::TemporaryPage;
 use super::FRAME_ALLOCATOR;
 use super::mapper::MapperFlush;
