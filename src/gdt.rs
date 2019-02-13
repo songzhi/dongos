@@ -50,3 +50,19 @@ pub fn init() {
         load_tss(GDT.1.tss_selector);
     }
 }
+
+#[cfg(feature = "pti")]
+pub unsafe fn set_tss_stack(stack: usize) {
+    // TODO: implement
+    unimplemented!()
+//    use arch::x86_64::pti::{PTI_CPU_STACK, PTI_CONTEXT_STACK};
+//    TSS.rsp[0] = (PTI_CPU_STACK.as_ptr() as usize + PTI_CPU_STACK.len()) as u64;
+//    PTI_CONTEXT_STACK = stack;
+}
+
+#[cfg(not(feature = "pti"))]
+pub unsafe fn set_tss_stack(stack: usize) {
+    // TODO: implement
+    unimplemented!()
+//    TSS.rsp[0] = stack as u64;
+}
