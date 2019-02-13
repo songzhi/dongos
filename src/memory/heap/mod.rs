@@ -1,17 +1,12 @@
 #[cfg(not(test))]
 pub mod bump_allocator;
 
-use x86_64::structures::paging::Page;
+use x86_64::structures::paging::{Page, PageTableFlags as EntryFlags};
 use x86_64::VirtAddr;
 
 use super::table::ActivePageTable;
 use super::mapper::MapperFlushAll;
 use crate::HEAP_ALLOCATOR;
-
-pub const HEAP_SIZE: usize = 100 * 1024;
-// 100 KiB
-pub const HEAP_START: usize = 0o_000_001_000_000_0000;
-pub const HEAP_END: usize = HEAP_START + HEAP_SIZE;
 
 unsafe fn map_heap(active_table: &mut ActivePageTable, offset: usize, size: usize) {
     let mut flush_all = MapperFlushAll::new();
@@ -34,7 +29,7 @@ pub unsafe fn init(active_table: &mut ActivePageTable) {
     map_heap(active_table, offset, size);
 
     // Initialize global heap
-    unsafe { HEAP_ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE); }
+    unsafe { HEAP_ALLOCATOR.lock().init(offset, size); }
 }
 
 /// Error handler for allocation errors

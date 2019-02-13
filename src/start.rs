@@ -7,7 +7,7 @@ use super::memory::{HEAP_START, HEAP_SIZE, P4_TABLE_ADDR, FRAME_ALLOCATOR};
 #[cfg(not(test))]
 #[no_mangle]
 pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
-    use crate::memory::{self, create_example_mapping};
+    use crate::memory::{self, create_example_mapping, ActivePageTable, heap};
 
     println!("Hello World{}", "!");
 
@@ -28,13 +28,15 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
     };
     memory::init(boot_info, 0, kernel_end);
 
-    let mut recursive_page_table = unsafe { memory::new_recursive_page_table(boot_info.p4_table_addr as usize) };
-    create_example_mapping(&mut recursive_page_table, FRAME_ALLOCATOR.lock().as_mut().unwrap());
+    let mut active_page_table = unsafe {
+        let mut active_page_table = ActivePageTable::new();
+        heap::init(&mut active_page_table);
+        active_page_table
+    };
 
-    unsafe { HEAP_ALLOCATOR.lock().init(HEAP_START, HEAP_SIZE); }
+    create_example_mapping(&mut active_page_table, FRAME_ALLOCATOR.lock().as_mut().unwrap());
     // 打印：new！
     unsafe { (0xdeadbeaf900 as *mut u64).write_volatile(0xf021f077f065f04e) };
-
 
     println!("It did not crash!");
     crate::hlt_loop();

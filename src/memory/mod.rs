@@ -66,7 +66,7 @@ pub fn translate_addr(addr: u64, recursive_page_table: &RecursivePageTable) -> O
 }
 
 pub fn create_example_mapping(
-    recursive_page_table: &mut RecursivePageTable,
+    active_page_table: &mut ActivePageTable,
     frame_allocator: &mut BumpAllocator,
 ) {
     use x86_64::structures::paging::PageTableFlags as Flags;
@@ -75,14 +75,7 @@ pub fn create_example_mapping(
     let frame = PhysFrame::containing_address(PhysAddr::new(0xb8000));
     let flags = Flags::PRESENT | Flags::WRITABLE;
 
-    let map_to_result = unsafe { recursive_page_table.map_to(page, frame, flags, frame_allocator) };
-
-    let heap_start_page = Page::containing_address(VirtAddr::new(HEAP_START as u64));
-    let heap_end_page = Page::containing_address(VirtAddr::new((HEAP_END - 1) as u64));
-
-    for page in Page::range_inclusive(heap_start_page, heap_end_page) {
-        unsafe { recursive_page_table.map_to(page, frame_allocator.allocate_frame().unwrap(), flags, frame_allocator); }
-    }
+    let map_to_result = unsafe { active_page_table.map_to(page, frame, flags, frame_allocator) };
 
     map_to_result.expect("map_to failed").flush();
 }
