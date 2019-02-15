@@ -14,9 +14,13 @@ use lazy_static::lazy_static;
 //resets to 0 in context::switch()
 pub static PIT_TICKS: AtomicUsize = AtomicUsize::new(0);
 
+unsafe fn irq_trigger(interrupt_id: u8) {
+    PICS.lock().notify_end_of_interrupt(interrupt_id);
+}
+
 pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut ExceptionStackFrame) {
     //print!('.');
-    unsafe { PICS.lock().notify_end_of_interrupt(TIMER_INTERRUPT_ID) }
+    unsafe { irq_trigger(TIMER_INTERRUPT_ID); }
 }
 
 pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut ExceptionStackFrame) {
@@ -42,5 +46,5 @@ pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut Exce
         }
     }
 
-    unsafe { PICS.lock().notify_end_of_interrupt(KEYBOARD_INTERRUPT_ID) }
+    unsafe { irq_trigger(KEYBOARD_INTERRUPT_ID); }
 }

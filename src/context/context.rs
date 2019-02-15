@@ -184,14 +184,15 @@ impl Context {
             name: Arc::new(Mutex::new(Vec::new().into_boxed_slice())),
             cwd: Arc::new(Mutex::new(Vec::new())),
 //            files: Arc::new(Mutex::new(Vec::new())),
-            actions: Arc::new(Mutex::new(vec![(
-                                                  SigAction {
-                                                      sa_handler: unsafe { mem::transmute(SIG_DFL) },
-                                                      sa_mask: [0; 2],
-                                                      sa_flags: 0,
-                                                  },
-                                                  0
-                                              ); 128])),
+            actions: Arc::new(Mutex::new(
+                vec![(
+                         SigAction {
+                             sa_handler: unsafe { mem::transmute(SIG_DFL) },
+                             sa_mask: [0; 2],
+                             sa_flags: 0,
+                         },
+                         0
+                     ); 128])),
         }
     }
 
