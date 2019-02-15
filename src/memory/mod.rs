@@ -20,8 +20,9 @@ pub mod recycle;
 
 pub use self::table::{ActivePageTable, InactivePageTable, P4_TABLE_ADDR};
 use self::frame_allocator::BumpAllocator;
+use self::recycle::RecycleAllocator;
 
-pub static FRAME_ALLOCATOR: Mutex<Option<BumpAllocator>> = Mutex::new(None);
+pub static FRAME_ALLOCATOR: Mutex<Option<RecycleAllocator<BumpAllocator>>> = Mutex::new(None);
 static mut MEMORY_MAP: Option<&'static MemoryMap> = None;
 
 /// Number of entries per page table
@@ -35,7 +36,8 @@ pub const PAGE_SIZE: usize = 4096;
 pub fn init(boot_info: &'static BootInfo, kernel_start: usize, kernel_end: usize) {
     P4_TABLE_ADDR.call_once(|| boot_info.p4_table_addr as usize);
     unsafe { MEMORY_MAP = Some(&boot_info.memory_map); }
-    *FRAME_ALLOCATOR.lock() = Some(BumpAllocator::new(kernel_start, kernel_end, MemoryAreaIter::new(MemoryRegionType::Usable)));
+    let bump = BumpAllocator::new(kernel_start, kernel_end, MemoryAreaIter::new(MemoryRegionType::Usable));
+    *FRAME_ALLOCATOR.lock() = Some(RecycleAllocator::new(bump));
 }
 
 /// Creates a RecursivePageTable instance from the level 4 address.

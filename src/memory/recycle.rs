@@ -61,19 +61,19 @@ impl<T: FrameAllocator> RecycleAllocator<T> {
 }
 
 impl<T: FrameAllocator> RecycleAllocator<T> {
-    fn set_noncore(&mut self, noncore: bool) {
+    pub fn set_noncore(&mut self, noncore: bool) {
         self.noncore = noncore;
     }
 
-    fn free_frames(&self) -> usize {
+    pub fn free_frames(&self) -> usize {
         self.inner.free_frames() + self.free_count()
     }
 
-    fn used_frames(&self) -> usize {
+    pub fn used_frames(&self) -> usize {
         self.inner.used_frames() - self.free_count()
     }
 
-    fn allocate_frames(&mut self, count: usize) -> Option<PhysFrame> {
+    pub fn allocate_frames(&mut self, count: usize) -> Option<PhysFrame> {
         let mut small_i = None;
         {
             let mut small = (0, 0);
@@ -107,7 +107,7 @@ impl<T: FrameAllocator> RecycleAllocator<T> {
             self.inner.allocate_frames(count)
         }
     }
-    fn deallocate_frames(&mut self, frame: PhysFrame, count: usize) {
+    pub fn deallocate_frames(&mut self, frame: PhysFrame, count: usize) {
         if self.noncore {
             let address = frame.start_address().get();
             if !self.merge(address, count) {
