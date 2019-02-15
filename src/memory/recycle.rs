@@ -2,8 +2,7 @@
 //! Uses freed frames if possible, then uses inner allocator
 
 use alloc::vec::Vec;
-
-use x86_64::structures::paging::PhysFrame;
+use x86_64::structures::paging::{PhysFrame, FrameAllocator as SimpleFrameAllocator, FrameDeallocator, Size4KiB};
 use super::FrameAllocator;
 use x86_64::PhysAddr;
 
@@ -113,5 +112,17 @@ impl<T: FrameAllocator> FrameAllocator for RecycleAllocator<T> {
             //println!("Could not save frame {:?}, {}", frame, count);
             self.inner.deallocate_frames(frame, count);
         }
+    }
+}
+
+impl SimpleFrameAllocator<Size4KiB> for RecycleAllocator {
+    fn allocate_frame(&mut self) -> Option<PhysFrame> {
+        self.allocate_frames(1)
+    }
+}
+
+impl FrameDeallocator<Size4KiB> for RecycleAllocator {
+    fn deallocate_frame(&mut self, frame: PhysFrame) {
+        self.deallocate_frames(frame, 1);
     }
 }
