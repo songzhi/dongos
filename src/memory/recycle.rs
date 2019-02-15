@@ -3,7 +3,8 @@
 
 use alloc::vec::Vec;
 
-use x86_64::structures::paging::{PhysFrame, FrameAllocator, FrameDeallocator};
+use x86_64::structures::paging::{PhysFrame};
+use super::FrameAllocator;
 use x86_64::PhysAddr;
 
 pub struct RecycleAllocator<T: FrameAllocator> {
@@ -72,7 +73,7 @@ impl<T: FrameAllocator> RecycleAllocator<T> {
         self.inner.used_frames() - self.free_count()
     }
 
-    fn allocate_frames(&mut self, count: usize) -> Option<Frame> {
+    fn allocate_frames(&mut self, count: usize) -> Option<PhysFrame> {
         let mut small_i = None;
         {
             let mut small = (0, 0);
@@ -100,13 +101,13 @@ impl<T: FrameAllocator> RecycleAllocator<T> {
             }
 
             //println!("Restoring frame {:?}, {}", frame, count);
-            Some(Frame::containing_address(PhysicalAddress::new(address)))
+            Some(PhysFrame::containing_address(PhysAddr::new(address as u64)))
         } else {
             //println!("No saved frames {}", count);
             self.inner.allocate_frames(count)
         }
     }
-    fn deallocate_frames(&mut self, frame: Frame, count: usize) {
+    fn deallocate_frames(&mut self, frame: PhysFrame, count: usize) {
         if self.noncore {
             let address = frame.start_address().get();
             if !self.merge(address, count) {

@@ -16,6 +16,8 @@ pub mod temporary_page;
 pub mod mapper;
 pub mod frame_allocator;
 
+pub mod recycle;
+
 pub use self::table::{ActivePageTable, InactivePageTable, P4_TABLE_ADDR};
 use self::frame_allocator::BumpAllocator;
 
