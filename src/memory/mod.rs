@@ -69,7 +69,7 @@ pub fn translate_addr(addr: u64, active_page_table: &ActivePageTable) -> Option<
 
 pub fn create_example_mapping(
     active_page_table: &mut ActivePageTable,
-    frame_allocator: &mut BumpAllocator,
+    frame_allocator: &mut impl FrameAllocator,
 ) {
     use x86_64::structures::paging::PageTableFlags as Flags;
 

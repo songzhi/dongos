@@ -104,7 +104,7 @@ impl<T: FrameAllocator> FrameAllocator for RecycleAllocator<T> {
     }
     fn deallocate_frames(&mut self, frame: PhysFrame, count: usize) {
         if self.noncore {
-            let address = frame.start_address().get();
+            let address = frame.start_address().as_u64() as usize;
             if !self.merge(address, count) {
                 self.free.push((address, count));
             }
