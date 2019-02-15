@@ -8,7 +8,7 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 use spin;
 use x86_64::structures::idt::ExceptionStackFrame;
 use crate::device::pic::*;
-use crate::print;
+use crate::{print, time};
 use lazy_static::lazy_static;
 
 //resets to 0 in context::switch()
@@ -19,7 +19,19 @@ unsafe fn irq_trigger(interrupt_id: u8) {
 }
 
 pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut ExceptionStackFrame) {
-    //print!('.');
+    const PIT_RATE: u64 = 2_250_286;
+
+    {
+        let mut offset = time::OFFSET.lock();
+        let sum = offset.1 + PIT_RATE;
+        offset.1 = sum % 1_000_000_000;
+        offset.0 += sum / 1_000_000_000;
+    }
+
+//    timeout::trigger();
+//    if PIT_TICKS.fetch_add(1, Ordering::SeqCst) >= 10 {
+//        let _ = context::switch();
+//    }
     unsafe { irq_trigger(TIMER_INTERRUPT_ID); }
 }
 
