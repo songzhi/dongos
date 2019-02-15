@@ -115,13 +115,13 @@ impl<T: FrameAllocator> FrameAllocator for RecycleAllocator<T> {
     }
 }
 
-impl SimpleFrameAllocator<Size4KiB> for RecycleAllocator {
+impl<T: FrameAllocator> SimpleFrameAllocator<Size4KiB> for RecycleAllocator<T> {
     fn allocate_frame(&mut self) -> Option<PhysFrame> {
         self.allocate_frames(1)
     }
 }
 
-impl FrameDeallocator<Size4KiB> for RecycleAllocator {
+impl<T: FrameAllocator> FrameDeallocator<Size4KiB> for RecycleAllocator<T> {
     fn deallocate_frame(&mut self, frame: PhysFrame) {
         self.deallocate_frames(frame, 1);
     }
