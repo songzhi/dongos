@@ -5,20 +5,7 @@ use x86_64::VirtAddr;
 
 pub const DOUBLE_FAULT_IST_INDEX: u16 = 0;
 
-lazy_static! {
-    static ref TSS: TaskStateSegment = {
-        let mut tss = TaskStateSegment::new();
-        tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX as usize] = {
-            const STACK_SIZE: usize = 4096;
-            static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
-
-            let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
-            let stack_end = stack_start + STACK_SIZE;
-            stack_end
-        };
-        tss
-    };
-}
+pub static mut TSS: TaskStateSegment = TaskStateSegment::new();
 
 lazy_static! {
     static ref GDT: (GlobalDescriptorTable, Selectors) = {
@@ -46,14 +33,22 @@ pub fn init() {
 
     GDT.0.load();
     unsafe {
+        TSS.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX as usize] = {
+            const STACK_SIZE: usize = 4096;
+            static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
+
+            let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
+            let stack_end = stack_start + STACK_SIZE;
+            stack_end
+        };
         set_cs(GDT.1.code_selector);
         load_tss(GDT.1.tss_selector);
     }
 }
 
+/// about [pti](https://en.wikipedia.org/wiki/Kernel_page-table_isolation)
 #[cfg(feature = "pti")]
 pub unsafe fn set_tss_stack(stack: usize) {
-    // TODO: implement
     unimplemented!()
 //    use arch::x86_64::pti::{PTI_CPU_STACK, PTI_CONTEXT_STACK};
 //    TSS.rsp[0] = (PTI_CPU_STACK.as_ptr() as usize + PTI_CPU_STACK.len()) as u64;
@@ -62,7 +57,5 @@ pub unsafe fn set_tss_stack(stack: usize) {
 
 #[cfg(not(feature = "pti"))]
 pub unsafe fn set_tss_stack(stack: usize) {
-    // TODO: implement
-    unimplemented!()
-//    TSS.rsp[0] = stack as u64;
+    TSS.privilege_stack_table[0] = VirtAddr::new(stack as u64);
 }
