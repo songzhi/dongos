@@ -5,7 +5,6 @@ use x86_64::VirtAddr;
 
 pub const DOUBLE_FAULT_IST_INDEX: u16 = 0;
 
-#[thread_local]
 pub static mut TSS: TaskStateSegment = TaskStateSegment::new();
 
 lazy_static! {
