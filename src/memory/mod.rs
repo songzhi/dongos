@@ -40,6 +40,16 @@ pub fn init(boot_info: &'static BootInfo, kernel_start: usize, kernel_end: usize
     *FRAME_ALLOCATOR.lock() = Some(RecycleAllocator::new(bump));
 }
 
+/// Init memory module after core
+/// Must be called once, and only once,
+pub unsafe fn init_noncore() {
+    if let Some(ref mut allocator) = *FRAME_ALLOCATOR.lock() {
+        allocator.set_noncore(true)
+    } else {
+        panic!("frame allocator not initialized");
+    }
+}
+
 /// Creates a RecursivePageTable instance from the level 4 address.
 ///
 /// This function is unsafe because it can break memory safety if an invalid

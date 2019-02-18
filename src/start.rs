@@ -15,7 +15,6 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
     crate::idt::init();
     unsafe {
         crate::device::init();
-        crate::device::init_noncore();
     };
     x86_64::instructions::interrupts::enable();
 
@@ -33,6 +32,14 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
         heap::init(&mut active_page_table);
         active_page_table
     };
+
+    unsafe {
+        // Initialize all of the non-core devices not otherwise needed to complete initialization
+        crate::device::init_noncore();
+
+        // Initialize memory functions after core has loaded
+        memory::init_noncore();
+    }
 
     create_example_mapping(&mut active_page_table, FRAME_ALLOCATOR.lock().as_mut().unwrap());
     // 打印：new！
