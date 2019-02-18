@@ -60,6 +60,9 @@ impl<T: FrameAllocator> RecycleAllocator<T> {
 }
 
 impl<T: FrameAllocator> FrameAllocator for RecycleAllocator<T> {
+    fn set_noncore(&mut self, noncore: bool) {
+        self.noncore = noncore;
+    }
     fn free_frames(&self) -> usize {
         self.inner.free_frames() + self.free_count()
     }

@@ -92,6 +92,7 @@ pub fn allocate_frames(count: usize) -> Option<PhysFrame> {
 }
 
 pub trait FrameAllocator: SimpleFrameAllocator<Size4KiB> + FrameDeallocator<Size4KiB> {
+    fn set_noncore(&mut self, noncore: bool);
     fn free_frames(&self) -> usize;
     fn used_frames(&self) -> usize;
     fn allocate_frames(&mut self, count: usize) -> Option<PhysFrame>;
