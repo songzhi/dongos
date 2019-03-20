@@ -34,7 +34,7 @@ pub const PAGE_SIZE: usize = 4096;
 /// Init memory module
 /// Must be called once, and only once,
 pub fn init(boot_info: &'static BootInfo, kernel_start: usize, kernel_end: usize) {
-    P4_TABLE_ADDR.call_once(|| boot_info.p4_table_addr as usize);
+    P4_TABLE_ADDR.call_once(|| boot_info.recursive_page_table_addr as usize);
     unsafe { MEMORY_MAP = Some(&boot_info.memory_map); }
     let bump = BumpAllocator::new(kernel_start, kernel_end, MemoryAreaIter::new(MemoryRegionType::Usable));
     *FRAME_ALLOCATOR.lock() = Some(RecycleAllocator::new(bump));
@@ -74,7 +74,7 @@ pub fn translate_addr(addr: u64, active_page_table: &ActivePageTable) -> Option<
 
     // perform the translation
     let frame = active_page_table.translate_page(page);
-    frame.map(|frame| frame.start_address() + u64::from(addr.page_offset()))
+    frame.map(|frame| frame.start_address() + u64::from(addr.page_offset())).ok()
 }
 
 pub fn create_example_mapping(

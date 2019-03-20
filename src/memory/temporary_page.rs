@@ -24,7 +24,7 @@ impl TemporaryPage {
     /// Maps the temporary page to the given frame in the active table.
     /// Returns the start address of the temporary page.
     pub fn map(&mut self, frame: PhysFrame, flags: PageTableFlags, active_table: &mut ActivePageTable) -> VirtAddr {
-        assert!(active_table.translate_page(self.page).is_none(), "temporary page is already mapped");
+        assert!(active_table.translate_page(self.page).is_err(), "temporary page is already mapped");
         let result = unsafe { active_table.map_to(self.page, frame, flags, FRAME_ALLOCATOR.lock().as_mut().unwrap()).unwrap() };
 
         result.flush();

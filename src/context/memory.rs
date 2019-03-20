@@ -4,9 +4,9 @@ use x86_64::{
     VirtAddr,
     structures::{
         paging::{
-            PageRangeInclusive,
+            page::PageRangeInclusive,
             Page,
-            MapperFlush,
+            mapper::MapperFlush,
             Mapper,
             PageTableFlags as EntryFlags,
         }
@@ -166,7 +166,7 @@ impl Memory {
             let start_page = Page::containing_address(VirtAddr::new(self.start.as_u64() + self.size as u64));
             let end_page = Page::containing_address(VirtAddr::new(self.start.as_u64() + new_size as u64 - 1));
             for page in Page::range_inclusive(start_page, end_page) {
-                if active_table.translate_page(page).is_none() {
+                if active_table.translate_page(page).is_err() {
                     let result = active_table.map(page, self.flags);
                     flush_all.consume(result);
                 }
@@ -186,7 +186,7 @@ impl Memory {
             let mut flush_all = MapperFlushAll::new();
 
             for page in Page::range_inclusive(start_page, end_page) {
-                if active_table.translate_page(page).is_some() {
+                if active_table.translate_page(page).is_ok() {
                     let result = active_table.unmap(page).unwrap();
                     flush_all.consume(result.1);
                 }

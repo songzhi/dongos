@@ -1,4 +1,4 @@
-use x86_64::structures::paging::{PhysFrame, PageRangeInclusive, FrameAllocator as SimpleFrameAllocator, FrameDeallocator, Size4KiB};
+use x86_64::structures::paging::{PhysFrame, page::PageRangeInclusive, FrameAllocator as SimpleFrameAllocator, FrameDeallocator, Size4KiB};
 use x86_64::PhysAddr;
 use bootloader::bootinfo::{MemoryMap, MemoryRegion, MemoryRegionType};
 use core::slice::Iter;

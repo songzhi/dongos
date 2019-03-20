@@ -1,6 +1,10 @@
 use core::mem;
 
-pub use x86_64::structures::paging::{MapperFlush, Size4KiB};
+pub use x86_64::structures::paging::{
+    mapper::MapperFlush,
+    Size4KiB,
+};
+
 use super::table::ActivePageTable;
 
 /// To allow for combining multiple flushes into one, we have a way of flushing
