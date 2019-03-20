@@ -3,11 +3,26 @@ use pic8259_simple::ChainedPics;
 pub const PIC_1_OFFSET: u8 = 32;
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
 
-pub const TIMER_INTERRUPT_ID: u8 = PIC_1_OFFSET;
-pub const KEYBOARD_INTERRUPT_ID: u8 = PIC_1_OFFSET + 1;
-pub const RTC_INTERRUPT_ID: u8 = PIC_2_OFFSET;
-pub const ACPI_INTERRUPT_ID: u8 = PIC_2_OFFSET + 1;
-pub const MOUSE_INTERRUPT_ID: u8 = PIC_2_OFFSET + 4;
+#[derive(Debug, Clone, Copy)]
+#[repr(u8)]
+pub enum InterruptIndex {
+    Timer = PIC_1_OFFSET,
+    Keyboard,
+    RTC = PIC_2_OFFSET,
+    ACPI,
+    Mouse = PIC_2_OFFSET + 4,
+}
+
+impl InterruptIndex {
+    pub fn as_u8(self) -> u8 {
+        self as u8
+    }
+
+    pub fn as_usize(self) -> usize {
+        usize::from(self.as_u8())
+    }
+}
+
 
 pub static PICS: spin::Mutex<ChainedPics> =
     spin::Mutex::new(unsafe { ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET) });

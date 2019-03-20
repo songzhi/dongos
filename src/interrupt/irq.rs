@@ -32,7 +32,7 @@ pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut Interru
 //    if PIT_TICKS.fetch_add(1, Ordering::SeqCst) >= 10 {
 //        let _ = context::switch();
 //    }
-    unsafe { irq_trigger(TIMER_INTERRUPT_ID); }
+    unsafe { irq_trigger(InterruptIndex::Timer.as_u8()); }
 }
 
 pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut InterruptStackFrame) {
@@ -58,5 +58,5 @@ pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut Inte
         }
     }
 
-    unsafe { irq_trigger(KEYBOARD_INTERRUPT_ID); }
+    unsafe { irq_trigger(InterruptIndex::Keyboard.as_u8()); }
 }
