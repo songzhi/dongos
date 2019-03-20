@@ -5,14 +5,14 @@
 #![cfg(not(windows))]
 
 use crate::{hlt_loop, println};
-use x86_64::structures::idt::{ExceptionStackFrame, PageFaultErrorCode};
+use x86_64::structures::idt::{InterruptStackFrame, PageFaultErrorCode};
 
-pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut ExceptionStackFrame) {
+pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStackFrame) {
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
 
 pub extern "x86-interrupt" fn page_fault_handler(
-    stack_frame: &mut ExceptionStackFrame,
+    stack_frame: &mut InterruptStackFrame,
     _error_code: PageFaultErrorCode,
 ) {
     use crate::hlt_loop;
@@ -25,7 +25,7 @@ pub extern "x86-interrupt" fn page_fault_handler(
 }
 
 pub extern "x86-interrupt" fn double_fault_handler(
-    stack_frame: &mut ExceptionStackFrame,
+    stack_frame: &mut InterruptStackFrame,
     _error_code: u64,
 ) {
     println!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);

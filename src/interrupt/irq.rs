@@ -6,7 +6,7 @@
 
 use core::sync::atomic::{AtomicUsize, Ordering};
 use spin;
-use x86_64::structures::idt::ExceptionStackFrame;
+use x86_64::structures::idt::InterruptStackFrame;
 use crate::device::pic::*;
 use crate::{print, time};
 use lazy_static::lazy_static;
@@ -18,7 +18,7 @@ unsafe fn irq_trigger(interrupt_id: u8) {
     PICS.lock().notify_end_of_interrupt(interrupt_id);
 }
 
-pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut ExceptionStackFrame) {
+pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut InterruptStackFrame) {
     const PIT_RATE: u64 = 2_250_286;
 
     {
@@ -35,7 +35,7 @@ pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut Excepti
     unsafe { irq_trigger(TIMER_INTERRUPT_ID); }
 }
 
-pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut ExceptionStackFrame) {
+pub extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut InterruptStackFrame) {
     use pc_keyboard::{layouts, DecodedKey, Keyboard, ScancodeSet1};
     use spin::Mutex;
     use x86_64::instructions::port::Port;
