@@ -70,11 +70,11 @@ impl ActivePageTable {
     }
 
     pub fn flush(&mut self, page: Page) {
-        unsafe { tlb::flush(page.start_address()); }
+        tlb::flush(page.start_address());
     }
 
     pub fn flush_all(&mut self) {
-        unsafe { tlb::flush_all(); }
+        tlb::flush_all();
     }
 
     pub fn with<F>(&mut self, table: &mut InactivePageTable, f: F)

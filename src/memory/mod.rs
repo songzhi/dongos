@@ -1,6 +1,6 @@
 use bootloader::bootinfo::{MemoryMap, MemoryRegionType, MemoryRegion, BootInfo};
 use x86_64::structures::paging::{
-    FrameAllocator as SimpleFrameAllocator, FrameDeallocator, Mapper, Page, PageTable, PhysFrame, RecursivePageTable, Size4KiB,
+    FrameAllocator as SimpleFrameAllocator, FrameDeallocator, Mapper, Page, PhysFrame, Size4KiB,
 };
 use x86_64::{PhysAddr, VirtAddr};
 use spin::{Mutex, Once};

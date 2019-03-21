@@ -1,5 +1,5 @@
 #![no_std]
-#![allow(dead_code, unused_macros, unused_imports, unused_variables, unused_mut, deprecated)]
+#![allow(dead_code, unused_macros, unused_imports, unused_variables, unused_mut, deprecated, unused_must_use)]
 #![cfg_attr(not(test), no_main)]
 
 use bootloader::{bootinfo::BootInfo, entry_point, bootinfo::MemoryRegionType};

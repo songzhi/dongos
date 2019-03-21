@@ -43,7 +43,7 @@ impl Rtc {
         let RtcDateTime {
             second,
             minute,
-            hour, day, month, year, century
+            hour, day, month, year, century: _
         } = self.date_time();
 
         // Unix time from clock

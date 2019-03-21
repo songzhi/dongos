@@ -1,5 +1,3 @@
-pub mod bump_allocator;
-
 use x86_64::structures::paging::{Page, PageTableFlags as EntryFlags};
 use x86_64::VirtAddr;
 
@@ -28,7 +26,7 @@ pub unsafe fn init(active_table: &mut ActivePageTable) {
     map_heap(active_table, offset, size);
 
     // Initialize global heap
-    unsafe { HEAP_ALLOCATOR.lock().init(offset, size); }
+    HEAP_ALLOCATOR.lock().init(offset, size);
 }
 
 /// Error handler for allocation errors

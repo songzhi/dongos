@@ -5,7 +5,6 @@ use x86_64::{
     structures::paging::{Page, Size4KiB, PhysFrame, PageTableFlags, PageTable, Mapper}, };
 use super::ActivePageTable;
 use super::FRAME_ALLOCATOR;
-use core::borrow::BorrowMut;
 pub struct TemporaryPage {
     page: Page<Size4KiB>,
 }
