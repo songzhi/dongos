@@ -1,6 +1,6 @@
 #![no_std]
 #![cfg_attr(not(test), no_main)]
-#![cfg_attr(test, allow(dead_code, unused_macros, unused_imports))]
+#![allow(dead_code, unused_macros, unused_imports)]
 
 use bootloader::{bootinfo::BootInfo, entry_point, bootinfo::MemoryRegionType};
 use dongos::{exit_qemu, serial_println};

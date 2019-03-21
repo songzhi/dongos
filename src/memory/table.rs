@@ -1,15 +1,13 @@
 use core::ops::{Deref, DerefMut};
-use x86_64::structures::paging::{MappedPageTable, MapperAllSizes, PhysFrame, PageTable, Size4KiB, PageTableFlags as EntryFlags};
+use x86_64::structures::paging::{MappedPageTable, PhysFrame, PageTable, Size4KiB, PageTableFlags as EntryFlags};
 use x86_64::{PhysAddr, VirtAddr};
-use bootloader::bootinfo::BootInfo;
-use x86_64::registers::control::{Cr3, Cr3Flags};
+use x86_64::registers::control::Cr3;
 use x86_64::instructions::tlb;
 use x86_64::structures::paging::Page;
 use spin::Once;
 
 
 pub use x86_64::structures::paging::{Mapper, FrameAllocator};
-use super::temporary_page::TemporaryPage;
 use super::{FRAME_ALLOCATOR, allocate_frames, PHYSICAL_MEMORY_OFFSET, phys_to_virt};
 use super::mapper::MapperFlush;
 

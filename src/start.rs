@@ -1,7 +1,6 @@
 use bootloader::{bootinfo::{BootInfo, MemoryRegionType}};
 
-use crate::{println, print};
-use super::HEAP_ALLOCATOR;
+use crate::println;
 use super::memory::FRAME_ALLOCATOR;
 
 

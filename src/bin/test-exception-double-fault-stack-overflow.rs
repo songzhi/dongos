@@ -1,7 +1,7 @@
 #![feature(abi_x86_interrupt)]
 #![no_std]
 #![cfg_attr(not(test), no_main)]
-#![cfg_attr(test, allow(dead_code, unused_macros, unused_imports))]
+#![allow(dead_code, unused_macros, unused_imports, unused_variables, unused_mut, deprecated)]
 
 use dongos::{exit_qemu, serial_println};
 use core::panic::PanicInfo;

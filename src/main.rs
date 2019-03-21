@@ -6,7 +6,6 @@ use dongos::*;
 use core::panic::PanicInfo;
 use bootloader::entry_point;
 
-#[macro_use]
 extern crate dongos;
 
 use dongos::kernel_main;

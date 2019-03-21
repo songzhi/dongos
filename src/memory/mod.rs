@@ -4,8 +4,6 @@ use x86_64::structures::paging::{
 };
 use x86_64::{PhysAddr, VirtAddr};
 use spin::{Mutex, Once};
-use core::mem;
-use alloc::boxed::Box;
 pub use x86_64::{align_down, align_up};
 
 pub mod heap;
