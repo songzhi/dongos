@@ -4,7 +4,6 @@ use x86_64::{PhysAddr, VirtAddr};
 use x86_64::registers::control::Cr3;
 use x86_64::instructions::tlb;
 use x86_64::structures::paging::Page;
-use spin::Once;
 
 
 pub use x86_64::structures::paging::{Mapper, FrameAllocator};
