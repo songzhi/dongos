@@ -4,7 +4,7 @@ use crate::{println, print};
 use super::HEAP_ALLOCATOR;
 use super::memory::FRAME_ALLOCATOR;
 
-#[cfg(not(test))]
+
 #[no_mangle]
 pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
     use crate::memory::{self, create_example_mapping, ActivePageTable, heap};

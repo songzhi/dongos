@@ -1,4 +1,3 @@
-#[cfg(not(test))]
 pub mod bump_allocator;
 
 use x86_64::structures::paging::{Page, PageTableFlags as EntryFlags};
@@ -33,7 +32,6 @@ pub unsafe fn init(active_table: &mut ActivePageTable) {
 }
 
 /// Error handler for allocation errors
-#[cfg(not(test))]
 mod alloc_error {
     use alloc::alloc::Layout;
     use crate::println;

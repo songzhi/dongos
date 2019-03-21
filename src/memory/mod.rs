@@ -8,7 +8,6 @@ use core::mem;
 use alloc::boxed::Box;
 pub use x86_64::{align_down, align_up};
 
-#[cfg(not(test))]
 pub mod heap;
 
 pub mod table;
