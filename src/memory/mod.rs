@@ -74,17 +74,6 @@ pub unsafe fn new_recursive_page_table(level_4_table_addr: usize) -> RecursivePa
     inner(level_4_table_addr)
 }
 
-/// Returns the physical address for the given virtual address, or `None` if
-/// the virtual address is not mapped.
-pub fn translate_addr(addr: u64, active_page_table: &ActivePageTable) -> Option<PhysAddr> {
-    let addr = VirtAddr::new(addr);
-    let page: Page = Page::containing_address(addr);
-
-    // perform the translation
-    let frame = active_page_table.translate_page(page);
-    frame.map(|frame| frame.start_address() + u64::from(addr.page_offset())).ok()
-}
-
 pub fn create_example_mapping(
     active_page_table: &mut ActivePageTable,
     frame_allocator: &mut impl FrameAllocator,
