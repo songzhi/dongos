@@ -5,6 +5,7 @@
 use bootloader::{bootinfo::BootInfo, entry_point, bootinfo::MemoryRegionType};
 use dongos::{exit_qemu, serial_println};
 use core::panic::PanicInfo;
+use x86_64::structures::paging::mapper::MapperAllSizes;
 entry_point!(kernel_main);
 #[cfg(not(test))]
 #[no_mangle]
@@ -36,7 +37,6 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
     use x86_64::structures::paging::{Page, PhysFrame};
     use x86_64::{VirtAddr, PhysAddr};
     use x86_64::structures::paging::PageTableFlags as Flags;
-    use dongos::memory::translate_addr;
     use dongos::memory::FRAME_ALLOCATOR;
     use x86_64::structures::paging::Mapper;
     use x86_64::structures::paging::FrameAllocator;
@@ -47,7 +47,7 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
     unsafe {
         active_page_table.map_to(page, frame, flags, FRAME_ALLOCATOR.lock().as_mut().unwrap());
     }
-    assert_eq!(translate_addr(page.start_address().as_u64(), &active_page_table).unwrap(), frame.start_address());
+    assert_eq!(active_page_table.translate_addr(page.start_address()).unwrap(), frame.start_address());
     serial_println!("ok");
 
     unsafe {
