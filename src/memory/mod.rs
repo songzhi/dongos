@@ -55,22 +55,6 @@ pub unsafe fn init_noncore() {
     }
 }
 
-/// Creates a RecursivePageTable instance from the level 4 address.
-///
-/// This function is unsafe because it can break memory safety if an invalid
-/// address is passed.
-pub unsafe fn new_recursive_page_table(level_4_table_addr: usize) -> RecursivePageTable<'static> {
-    /// Rust currently treats the whole body of unsafe functions as an unsafe
-    /// block, which makes it difficult to see which operations are unsafe. To
-    /// limit the scope of unsafe we use a safe inner function.
-    fn inner(level_4_table_addr: usize) -> RecursivePageTable<'static> {
-        let level_4_table_ptr = level_4_table_addr as *mut PageTable;
-        let level_4_table = unsafe { &mut *level_4_table_ptr };
-        RecursivePageTable::new(level_4_table).unwrap()
-    }
-    inner(level_4_table_addr)
-}
-
 pub fn create_example_mapping(
     active_page_table: &mut ActivePageTable,
     frame_allocator: &mut impl FrameAllocator,
