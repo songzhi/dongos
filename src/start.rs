@@ -2,7 +2,7 @@ use bootloader::{bootinfo::{BootInfo, MemoryRegionType}};
 
 use crate::{println, print};
 use super::HEAP_ALLOCATOR;
-use super::memory::{P4_TABLE_ADDR, FRAME_ALLOCATOR};
+use super::memory::FRAME_ALLOCATOR;
 
 #[cfg(not(test))]
 #[no_mangle]

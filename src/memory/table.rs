@@ -1,46 +1,65 @@
 use core::ops::{Deref, DerefMut};
-use x86_64::structures::paging::{RecursivePageTable, PhysFrame, PageTable, Size4KiB, PageTableFlags as EntryFlags};
-use x86_64::PhysAddr;
+use x86_64::structures::paging::{MappedPageTable, MapperAllSizes, PhysFrame, PageTable, Size4KiB, PageTableFlags as EntryFlags};
+use x86_64::{PhysAddr, VirtAddr};
 use bootloader::bootinfo::BootInfo;
 use x86_64::registers::control::{Cr3, Cr3Flags};
 use x86_64::instructions::tlb;
 use x86_64::structures::paging::Page;
 use spin::Once;
 
-pub static P4_TABLE_ADDR: Once<usize> = Once::new();
 
 pub use x86_64::structures::paging::{Mapper, FrameAllocator};
 use super::temporary_page::TemporaryPage;
-use super::{FRAME_ALLOCATOR, allocate_frames};
+use super::{FRAME_ALLOCATOR, allocate_frames, PHYSICAL_MEMORY_OFFSET, phys_to_virt};
 use super::mapper::MapperFlush;
 
+type MappedTable = MappedPageTable<'static, fn(PhysFrame) -> *mut PageTable>;
+
 pub struct ActivePageTable {
-    mapper: RecursivePageTable<'static>,
+    mapper: MappedTable,
 }
 
 impl Deref for ActivePageTable {
-    type Target = RecursivePageTable<'static>;
+    type Target = MappedTable;
 
-    fn deref(&self) -> &RecursivePageTable<'static> {
+    fn deref(&self) -> &MappedTable {
         &self.mapper
     }
 }
 
 impl DerefMut for ActivePageTable {
-    fn deref_mut(&mut self) -> &mut RecursivePageTable<'static> {
+    fn deref_mut(&mut self) -> &mut MappedTable {
         &mut self.mapper
     }
 }
 
+/// Returns a mutable reference to the level 4 table.
+///
+/// This function is unsafe because the caller must guarantee that the
+/// complete physical memory is mapped to virtual memory at the passed
+/// `physical_memory_offset`. Also, this function must be only called once
+/// to avoid aliasing `&mut` references (which is undefined behavior).
+unsafe fn get_level_4_table(p4_frame: PhysFrame) -> &'static mut PageTable {
+    let physical_memory_offset = *PHYSICAL_MEMORY_OFFSET.r#try()
+        .expect("PHYSICAL_MEMORY_OFFSET not initialized");
+    let phys = p4_frame.start_address();
+    let virt = VirtAddr::new(phys.as_u64() + physical_memory_offset);
+    let page_table_ptr: *mut PageTable = virt.as_mut_ptr();
+
+    &mut *page_table_ptr // unsafe
+}
+
+unsafe fn active_level_4_table() -> &'static mut PageTable {
+    let (p4_frame, _) = Cr3::read();
+    get_level_4_table(p4_frame)
+}
+
+
 impl ActivePageTable {
     pub unsafe fn new() -> ActivePageTable {
-        fn init_inner(level_4_table_addr: usize) -> RecursivePageTable<'static> {
-            let level_4_table_ptr = level_4_table_addr as *mut PageTable;
-            let level_4_table = unsafe { &mut *level_4_table_ptr };
-            RecursivePageTable::new(level_4_table).unwrap()
-        }
+        let level_4_table = active_level_4_table();
         ActivePageTable {
-            mapper: init_inner(*P4_TABLE_ADDR.r#try().unwrap()),
+            mapper: MappedTable::new(level_4_table, |frame| phys_to_virt(frame).as_mut_ptr()),
         }
     }
 
@@ -61,28 +80,14 @@ impl ActivePageTable {
         unsafe { tlb::flush_all(); }
     }
 
-    pub fn with<F>(&mut self, table: &mut InactivePageTable, temporary_page: &mut TemporaryPage, f: F)
-        where F: FnOnce(&mut RecursivePageTable)
+    pub fn with<F>(&mut self, table: &mut InactivePageTable, f: F)
+        where F: FnOnce(&mut MappedTable)
     {
-        {
-            let backup = Cr3::read().0;
-
-            // map temporary_page to current p4 table
-            let p4_table = temporary_page.map_table_frame(backup.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE, self);
-
-            // overwrite recursive mapping
-            p4_table[crate::RECURSIVE_PAGE_PML4].set_frame(table.p4_frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE);
-            self.flush_all();
-
-            // execute f in the new context
-            f(self);
-
-            // restore recursive mapping to original p4 table
-            p4_table[crate::RECURSIVE_PAGE_PML4].set_frame(backup, EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE);
-            self.flush_all();
+        unsafe {
+            let level_4_table = get_level_4_table(table.p4_frame);
+            let mut new_table = MappedTable::new(level_4_table, |frame| phys_to_virt(frame).as_mut_ptr());
+            f(&mut new_table);
         }
-
-        temporary_page.unmap(self);
     }
 
     pub unsafe fn address(&self) -> PhysAddr {
@@ -102,15 +107,21 @@ pub struct InactivePageTable {
 }
 
 impl InactivePageTable {
-    pub fn new(frame: PhysFrame, active_table: &mut ActivePageTable, temporary_page: &mut TemporaryPage) -> InactivePageTable {
-        {
-            let table = temporary_page.map_table_frame(frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE, active_table);
-            // now we are able to zero the table
-            table.zero();
-            // set up recursive mapping for the table
-            table[crate::RECURSIVE_PAGE_PML4].set_frame(frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE | EntryFlags::NO_EXECUTE);
-        }
-        temporary_page.unmap(active_table);
+    /// We use the 'map_physical_memory' feature of 'bootloader' crate.
+    /// That is we map the whole physical memory in out virtual address space with an offset.
+    /// When we want to create a new level 4 page table,we need to do that again.
+    /// But as an optimization we link the level 3 page table from current address space to the new address space instead of copying them.
+    /// Inspired by this [post](https://os.phil-opp.com/paging-implementation/)
+    pub fn new(frame: PhysFrame) -> InactivePageTable {
+        let physical_memory_offset = *PHYSICAL_MEMORY_OFFSET.r#try()
+            .expect("PHYSICAL_MEMORY_OFFSET not initialized");
+        let inactive_table = unsafe { get_level_4_table(frame) };
+        let active_table = unsafe { active_level_4_table() };
+
+        let phys_mapped_entry_index = VirtAddr::new(physical_memory_offset).p4_index();
+        let old_entry = &active_table[phys_mapped_entry_index];
+        let new_entry = &mut inactive_table[phys_mapped_entry_index];
+        new_entry.set_addr(old_entry.addr(), old_entry.flags());
         InactivePageTable { p4_frame: frame }
     }
 

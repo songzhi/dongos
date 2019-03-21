@@ -119,7 +119,7 @@ impl Memory {
 
     /// A complicated operation to move a piece of memory to a new page table
     /// It also allows for changing the address at the same time
-    pub fn move_to(&mut self, new_start: VirtAddr, new_table: &mut InactivePageTable, temporary_page: &mut TemporaryPage) {
+    pub fn move_to(&mut self, new_start: VirtAddr, new_table: &mut InactivePageTable) {
         let mut active_table = unsafe { ActivePageTable::new() };
 
         let mut flush_all = MapperFlushAll::new();
@@ -128,7 +128,7 @@ impl Memory {
             let (frame, result) = active_table.unmap(page).unwrap();
             flush_all.consume(result);
 
-            active_table.with(new_table, temporary_page, |mapper| {
+            active_table.with(new_table, |mapper| {
                 let new_page = Page::containing_address(VirtAddr::new(page.start_address().as_u64() - self.start.as_u64() + new_start.as_u64()));
                 let result = unsafe {
                     mapper.map_to(new_page, frame, self.flags, FRAME_ALLOCATOR.lock().as_mut().unwrap())

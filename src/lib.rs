@@ -4,7 +4,6 @@
 #![feature(const_fn, core_intrinsics, impl_trait_in_bindings, thread_local, naked_functions)]
 #![feature(alloc, allocator_api, alloc_error_handler)]
 
-#[cfg(not(test))]
 #[macro_use]
 extern crate alloc;
 
@@ -33,7 +32,6 @@ use linked_list_allocator::LockedHeap;
 use core::sync::atomic::{AtomicUsize, Ordering};
 
 // Heap allocator (disabled during testing)
-#[cfg(not(test))]
 #[cfg_attr(not(test), global_allocator)]
 pub static HEAP_ALLOCATOR: LockedHeap = LockedHeap::empty();
 
