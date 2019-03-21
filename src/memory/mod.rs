@@ -3,7 +3,7 @@ use x86_64::structures::paging::{
     FrameAllocator as SimpleFrameAllocator, FrameDeallocator, Mapper, Page, PageTable, PhysFrame, RecursivePageTable, Size4KiB,
 };
 use x86_64::{PhysAddr, VirtAddr};
-use spin::Mutex;
+use spin::{Mutex, Once};
 use core::mem;
 use alloc::boxed::Box;
 pub use x86_64::{align_down, align_up};
@@ -18,10 +18,11 @@ pub mod frame_allocator;
 
 pub mod recycle;
 
-pub use self::table::{ActivePageTable, InactivePageTable, P4_TABLE_ADDR};
+pub use self::table::{ActivePageTable, InactivePageTable};
 use self::frame_allocator::BumpAllocator;
 use self::recycle::RecycleAllocator;
 
+pub static PHYSICAL_MEMORY_OFFSET: Once<u64> = Once::new();
 pub static FRAME_ALLOCATOR: Mutex<Option<RecycleAllocator<BumpAllocator>>> = Mutex::new(None);
 static mut MEMORY_MAP: Option<&'static MemoryMap> = None;
 
@@ -34,10 +35,17 @@ pub const PAGE_SIZE: usize = 4096;
 /// Init memory module
 /// Must be called once, and only once,
 pub fn init(boot_info: &'static BootInfo, kernel_start: usize, kernel_end: usize) {
-    P4_TABLE_ADDR.call_once(|| boot_info.recursive_page_table_addr as usize);
+    PHYSICAL_MEMORY_OFFSET.call_once(|| boot_info.physical_memory_offset);
     unsafe { MEMORY_MAP = Some(&boot_info.memory_map); }
     let bump = BumpAllocator::new(kernel_start, kernel_end, MemoryAreaIter::new(MemoryRegionType::Usable));
     *FRAME_ALLOCATOR.lock() = Some(RecycleAllocator::new(bump));
+}
+
+pub(crate) fn phys_to_virt(frame: PhysFrame) -> VirtAddr {
+    let physical_memory_offset = *PHYSICAL_MEMORY_OFFSET.r#try()
+        .expect("PHYSICAL_MEMORY_OFFSET not initialized");
+    let phys = frame.start_address().as_u64();
+    VirtAddr::new(phys + physical_memory_offset)
 }
 
 /// Init memory module after core
