@@ -36,7 +36,6 @@ use core::sync::atomic::{AtomicUsize, Ordering};
 pub static HEAP_ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 /// A unique number that identifies the current CPU - used for scheduling
-#[thread_local]
 static CPU_ID: AtomicUsize = AtomicUsize::new(0);
 
 /// Get the current CPU's scheduling ID

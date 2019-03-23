@@ -1,7 +1,11 @@
 use bootloader::{bootinfo::{BootInfo, MemoryRegionType}};
 
-use crate::println;
+use crate::{println, context};
 use super::memory::FRAME_ALLOCATOR;
+use crate::syscall::arch::syscall0;
+use x86_64::VirtAddr;
+use x86_64::structures::paging::mapper::{Mapper, MapperAllSizes};
+use x86_64::structures::paging::{Page, Size4KiB};
 
 
 #[no_mangle]
@@ -15,7 +19,7 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
     unsafe {
         crate::device::init();
     };
-    x86_64::instructions::interrupts::enable();
+
 
     let kernel_end = {
         let end_area = boot_info.memory_map
@@ -39,6 +43,17 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
         // Initialize memory functions after core has loaded
         memory::init_noncore();
     }
+    context::init();
+
+    {
+        extern "C" fn print_hello() {}
+        let virt = VirtAddr::new(print_hello as u64);
+        use x86_64::structures::paging::PageTableFlags as Flags;
+        let page = Page::<Size4KiB>::containing_address(virt);
+
+        context::contexts_mut().spawn(print_hello).expect("spawn failed");
+    }
+    x86_64::instructions::interrupts::enable();
 
     create_example_mapping(&mut active_page_table, FRAME_ALLOCATOR.lock().as_mut().unwrap());
     // 打印：new！

@@ -2,8 +2,9 @@ use core::sync::atomic::AtomicUsize;
 use spin;
 use x86_64::structures::idt::InterruptStackFrame;
 use crate::device::pic::*;
-use crate::{print, time};
+use crate::{print, time, context};
 use lazy_static::lazy_static;
+use core::sync::atomic::Ordering;
 
 //resets to 0 in context::switch()
 pub static PIT_TICKS: AtomicUsize = AtomicUsize::new(0);
@@ -23,9 +24,12 @@ pub extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut Interru
     }
 
 //    timeout::trigger();
-//    if PIT_TICKS.fetch_add(1, Ordering::SeqCst) >= 10 {
-//        let _ = context::switch();
-//    }
+    if PIT_TICKS.fetch_add(1, Ordering::SeqCst) >= 10 {
+        let switched = unsafe { context::switch() };
+        if switched {
+            println!("irq switched");
+        }
+    }
     unsafe { irq_trigger(InterruptIndex::Timer.as_u8()); }
 }
 

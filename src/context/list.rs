@@ -9,11 +9,16 @@ use spin::RwLock;
 use crate::memory::ActivePageTable;
 use crate::syscall::error::{Result, Error, EAGAIN};
 use super::context::{Context, ContextId};
+use crate::context::contexts;
 
 /// Context list type
 pub struct ContextList {
     map: BTreeMap<ContextId, Arc<RwLock<Context>>>,
     next_id: usize,
+}
+
+extern "C" fn kthread(func: fn()) {
+    func();
 }
 
 impl ContextList {
@@ -75,13 +80,17 @@ impl ContextList {
             unsafe {
                 let offset = stack.len() - mem::size_of::<usize>();
                 let func_ptr = stack.as_mut_ptr().offset(offset as isize);
+                let cs_ptr = stack.as_mut_ptr().offset((offset - mem::size_of::<usize>()) as isize);
+                *(cs_ptr as *mut usize) = 0x23;
                 *(func_ptr as *mut usize) = func as usize;
             }
+            println!("new thread func:0x{:X}", func as usize);
             context.arch.set_page_table(unsafe { ActivePageTable::address().as_u64() as usize });
             context.arch.set_fx(fx.as_ptr() as usize);
             context.arch.set_stack(stack.as_ptr() as usize + offset);
             context.kfx = Some(fx);
             context.kstack = Some(stack);
+            context.unblock();
         }
         Ok(context_lock)
     }
