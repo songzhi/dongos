@@ -1,5 +1,5 @@
 use core::mem;
-use core::sync::atomic::{AtomicBool};
+use core::sync::atomic::AtomicBool;
 
 /// This must be used by the kernel to ensure that context switches are done atomically
 /// Compare and exchange this to true when beginning a context switch on any CPU

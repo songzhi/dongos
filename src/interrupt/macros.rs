@@ -25,7 +25,7 @@ impl ScratchRegisters {
         println!("R11:   {:>016X}", { self.r11 });
     }
 }
-
+#[macro_export]
 macro_rules! scratch_push {
     () => (asm!(
         "push rax
@@ -40,7 +40,7 @@ macro_rules! scratch_push {
         : : : : "intel", "volatile"
     ));
 }
-
+#[macro_export]
 macro_rules! scratch_pop {
     () => (asm!(
         "pop r11
@@ -77,7 +77,7 @@ impl PreservedRegisters {
         println!("R15:   {:>016X}", { self.r15 });
     }
 }
-
+#[macro_export]
 macro_rules! preserved_push {
     () => (asm!(
         "push rbx
@@ -89,7 +89,7 @@ macro_rules! preserved_push {
         : : : : "intel", "volatile"
     ));
 }
-
+#[macro_export]
 macro_rules! preserved_pop {
     () => (asm!(
         "pop r15
@@ -101,7 +101,7 @@ macro_rules! preserved_pop {
         : : : : "intel", "volatile"
     ));
 }
-
+#[macro_export]
 macro_rules! fs_push {
     () => (asm!(
         "push fs
@@ -110,7 +110,7 @@ macro_rules! fs_push {
         : : : : "intel", "volatile"
     ));
 }
-
+#[macro_export]
 macro_rules! fs_pop {
     () => (asm!(
         "pop fs"
@@ -133,7 +133,7 @@ impl IretRegisters {
         println!("RIP:   {:>016X}", { self.rip });
     }
 }
-
+#[macro_export]
 macro_rules! iret {
     () => (asm!(
         "iretq"

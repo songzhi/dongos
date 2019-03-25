@@ -153,8 +153,6 @@ pub unsafe fn switch() -> bool {
             (&mut *to_ptr).ksig = Some((arch, kfx, kstack));
             (&mut *to_ptr).arch.signal_stack(signal_handler, sig);
         }
-//        println!("level:{:?}", x86_64::instructions::segmentation::cs().rpl() as u16);
-        println!("from:0x{:X} to:0x{:X}", from_ptr as usize, to_ptr as usize);
         (&mut *from_ptr).arch.switch_to(&mut (&mut *to_ptr).arch);
 
         true
