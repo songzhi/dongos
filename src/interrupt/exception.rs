@@ -13,7 +13,7 @@ pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut InterruptStac
 
 pub extern "x86-interrupt" fn page_fault_handler(
     stack_frame: &mut InterruptStackFrame,
-    _error_code: PageFaultErrorCode,
+    error_code: PageFaultErrorCode,
 ) {
     use crate::hlt_loop;
     use x86_64::registers::control::Cr2;
@@ -21,6 +21,7 @@ pub extern "x86-interrupt" fn page_fault_handler(
     println!("EXCEPTION: PAGE FAULT");
     println!("Accessed Address: {:?}", Cr2::read());
     println!("{:#?}", stack_frame);
+    println!("Error code: {:?}", error_code);
     hlt_loop();
 }
 
