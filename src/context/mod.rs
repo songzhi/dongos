@@ -27,7 +27,7 @@ pub const CONTEXT_MAX_FILES: usize = 65_536;
 /// Contexts list
 static CONTEXTS: Once<RwLock<ContextList>> = Once::new();
 
-#[thread_local]
+
 static CONTEXT_ID: context::AtomicContextId = context::AtomicContextId::default();
 
 pub fn init() {

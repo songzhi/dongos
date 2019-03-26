@@ -77,7 +77,7 @@ impl ContextList {
                 let func_ptr = stack.as_mut_ptr().offset(offset as isize);
                 *(func_ptr as *mut usize) = func as usize;
             }
-            context.arch.set_page_table(unsafe { ActivePageTable::new().address().as_u64() as usize });
+            context.arch.set_page_table(unsafe { ActivePageTable::address().as_u64() as usize });
             context.arch.set_fx(fx.as_ptr() as usize);
             context.arch.set_stack(stack.as_ptr() as usize + offset);
             context.kfx = Some(fx);

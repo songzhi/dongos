@@ -1,8 +1,13 @@
 use bootloader::{bootinfo::{BootInfo, MemoryRegionType}};
 
-use crate::println;
+use crate::{println, hlt_loop, interrupt, context};
 use super::memory::FRAME_ALLOCATOR;
+use crate::context::Status;
 
+pub extern fn context_test() {
+    println!("Hello from another thread!");
+    hlt_loop();
+}
 
 #[no_mangle]
 pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
@@ -15,8 +20,6 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
     unsafe {
         crate::device::init();
     };
-    x86_64::instructions::interrupts::enable();
-
     let kernel_end = {
         let end_area = boot_info.memory_map
             .iter()
@@ -40,10 +43,21 @@ pub fn kernel_main(boot_info: &'static BootInfo) -> ! {
         memory::init_noncore();
     }
 
+    context::init();
+
+    {
+        if let Ok(context_lock) = context::contexts_mut().spawn(context_test) {
+            let mut context = context_lock.write();
+            context.status = Status::Runnable;
+        }
+    }
+
+    interrupt::enable();
+
     create_example_mapping(&mut active_page_table, FRAME_ALLOCATOR.lock().as_mut().unwrap());
     // 打印：new！
     unsafe { (0xdeadbeaf900 as *mut u64).write_volatile(0xf021f077f065f04e) };
 
     println!("It did not crash!");
-    crate::hlt_loop();
+    hlt_loop();
 }

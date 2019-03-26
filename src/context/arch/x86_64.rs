@@ -119,11 +119,12 @@ impl Context {
         asm!("mov $0, r15" : "=r"(self.r15) : : "memory" : "intel", "volatile");
         asm!("mov r15, $0" : : "r"(next.r15) : "memory" : "intel", "volatile");
 
+        asm!("mov $0, rbp" : "=r"(self.rbp) : : "memory" : "intel", "volatile");
+        asm!("mov rbp, $0" : : "r"(next.rbp) : "memory" : "intel", "volatile");
+
         asm!("mov $0, rsp" : "=r"(self.rsp) : : "memory" : "intel", "volatile");
         asm!("mov rsp, $0" : : "r"(next.rsp) : "memory" : "intel", "volatile");
 
-        asm!("mov $0, rbp" : "=r"(self.rbp) : : "memory" : "intel", "volatile");
-        asm!("mov rbp, $0" : : "r"(next.rbp) : "memory" : "intel", "volatile");
     }
 }
 
