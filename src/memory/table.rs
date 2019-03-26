@@ -87,7 +87,7 @@ impl ActivePageTable {
         }
     }
 
-    pub unsafe fn address(&self) -> PhysAddr {
+    pub unsafe fn address() -> PhysAddr {
         Cr3::read().0.start_address()
     }
 
