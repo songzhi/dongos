@@ -17,6 +17,10 @@ pub struct ContextList {
     next_id: usize,
 }
 
+extern "C" fn kthread(func: fn()) {
+    func();
+}
+
 impl ContextList {
     /// Create a new context list.
     pub fn new() -> Self {
@@ -76,6 +80,8 @@ impl ContextList {
             unsafe {
                 let offset = stack.len() - mem::size_of::<usize>();
                 let func_ptr = stack.as_mut_ptr().offset(offset as isize);
+                let cs_ptr = stack.as_mut_ptr().offset((offset - mem::size_of::<usize>()) as isize);
+                *(cs_ptr as *mut usize) = 0x23;
                 *(func_ptr as *mut usize) = func as usize;
             }
             println!("new thread func:0x{:X}", func as usize);
