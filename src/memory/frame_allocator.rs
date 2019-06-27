@@ -119,7 +119,7 @@ impl FrameAllocator for BumpAllocator {
     }
 }
 
-impl SimpleFrameAllocator<Size4KiB> for BumpAllocator {
+unsafe impl SimpleFrameAllocator<Size4KiB> for BumpAllocator {
     fn allocate_frame(&mut self) -> Option<PhysFrame> {
         self.allocate_frames(1)
     }

@@ -1,8 +1,8 @@
 #![cfg_attr(not(test), no_std)]
 #![feature(abi_x86_interrupt)]
 #![feature(asm)]
-#![feature(const_fn, core_intrinsics, impl_trait_in_bindings, thread_local, naked_functions)]
-#![feature(alloc, allocator_api, alloc_error_handler)]
+#![feature(const_fn, core_intrinsics, thread_local, naked_functions)]
+#![feature(alloc_error_handler)]
 
 #[macro_use]
 extern crate alloc;

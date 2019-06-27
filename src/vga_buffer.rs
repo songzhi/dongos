@@ -112,7 +112,7 @@ impl Writer {
         for byte in s.bytes() {
             match byte {
                 // printable ASCII byte or newline
-                0x20...0x7e | b'\n' => self.write_byte(byte),
+                0x20..=0x7e | b'\n' => self.write_byte(byte),
                 // not part of printable ASCII range
                 _ => self.write_byte(0xfe),
             }
@@ -180,8 +180,6 @@ mod test {
     use super::*;
 
     fn construct_writer() -> Writer {
-        use std::boxed::Box;
-
         let buffer = construct_buffer();
         Writer {
             column_position: 0,

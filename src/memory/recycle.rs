@@ -118,7 +118,7 @@ impl<T: FrameAllocator> FrameAllocator for RecycleAllocator<T> {
     }
 }
 
-impl<T: FrameAllocator> SimpleFrameAllocator<Size4KiB> for RecycleAllocator<T> {
+unsafe impl<T: FrameAllocator> SimpleFrameAllocator<Size4KiB> for RecycleAllocator<T> {
     fn allocate_frame(&mut self) -> Option<PhysFrame> {
         self.allocate_frames(1)
     }
