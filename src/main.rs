@@ -19,3 +19,9 @@ fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
     dongos::hlt_loop();
 }
+
+#[cfg(test)]
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    dongos::test_panic_handler(info)
+}

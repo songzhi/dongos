@@ -33,12 +33,14 @@ addons:
   homebrew:
     packages:
       - qemu
+    update: true
 
 before_script:
   - rustup component add rust-src llvm-tools-preview
   - cargo install cargo-xbuild bootimage cargo-cache --debug -Z install-upgrade
 
 script:
-  - bootimage build
-  - bootimage test
+  - cargo xbuild
+  - cargo bootimage
+  - cargo xtest
   - cargo cache --autoclean
